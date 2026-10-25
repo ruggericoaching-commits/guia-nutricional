@@ -184,7 +184,7 @@
     const tip = tips.length ? tips[(Math.floor(Date.now() / 864e5)) % tips.length] : null;
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.navigator.standalone;
     const g = glasses(), w = L.w || 0, ph = phase(), fl = freePerWeek() ? freeLeft(d) : 0;
-    return `${hero(`${hi}, ${esc(P.cl.n || '')} 👋`, fdate(d, true), ring(pct, { size: 76, label: `${done}/${ms.length}`, sub: 'comidas', color: 'var(--onacc)' }))}
+    return `${hero(`${hi}, ${esc(P.cl.n || '')} 👋`, fdate(d, true), ring(pct, { size: 76, label: `${done}/${ms.length}`, sub: 'comidas', color: 'var(--acc)' }))}
       <div class="daynav"><button class="ib" data-a="day" data-d="-1">${ic('chevL')}</button>
         <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>

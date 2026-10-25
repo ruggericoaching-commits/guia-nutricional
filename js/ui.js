@@ -58,6 +58,18 @@
     return long ? d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }) : `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
   };
 
+  // Envuelve los emojis en <span class="emj"> para mostrarlos en gris (solo texto: no toca atributos ni campos)
+  const EMO = /(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*️?)/u;
+  function mute(el) {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = [];
+    while (w.nextNode()) { const n = w.currentNode; if (EMO.test(n.data) && !/^(TEXTAREA|OPTION|TITLE)$/.test(n.parentNode.nodeName) && !n.parentNode.classList.contains('emj')) nodes.push(n); }
+    nodes.forEach(n => {
+      const f = document.createDocumentFragment();
+      n.data.split(EMO).forEach((s, i) => { if (!s) return; if (i % 2) { const e = document.createElement('span'); e.className = 'emj'; e.textContent = s; f.append(e); } else f.append(s); });
+      n.replaceWith(f);
+    });
+  }
+
   /* ── Capas: hojas inferiores, diálogos y avisos ────────────────── */
   const stack = [];
   function open(html, o = {}) {
@@ -65,6 +77,7 @@
     const el = document.createElement('div');
     el.className = 'ov' + (o.center ? ' center' : '');
     el.innerHTML = `<div class="sheet${o.wide ? ' wide' : ''}" role="dialog" aria-modal="true">${o.noClose ? '' : `<button class="sheet-x" data-ui="close" aria-label="Cerrar">${ic('x', 20)}</button>`}<div class="sheet-b">${html}</div></div>`;
+    mute(el);
     el.addEventListener('click', e => { if (e.target === el && !o.noClose) close(); });
     layer.appendChild(el);
     stack.push({ el, o });
@@ -74,7 +87,7 @@
     if (first) setTimeout(() => first.focus(), 60);
     return el;
   }
-  function update(html) { const top = stack[stack.length - 1]; if (top) { const b = top.el.querySelector('.sheet-b'); const st = b.parentElement.scrollTop; b.innerHTML = html; b.parentElement.scrollTop = st; } }
+  function update(html) { const top = stack[stack.length - 1]; if (top) { const b = top.el.querySelector('.sheet-b'); const st = b.parentElement.scrollTop; b.innerHTML = html; mute(b); b.parentElement.scrollTop = st; } }
   function close() {
     const top = stack.pop(); if (!top) return;
     top.el.classList.remove('on');
@@ -134,6 +147,7 @@
     let sel = null; try { if (key) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
     const sy = window.scrollY;
     root.innerHTML = html;
+    mute(root);
     if (key) {
       const el = root.querySelector(`[data-k="${CSS.escape(key)}"]`);
       if (el) { el.focus({ preventScroll: true }); try { if (sel && sel[0] != null) el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
@@ -153,7 +167,7 @@
     if (t === 'light' || t === 'dark') h.dataset.theme = t; else delete h.dataset.theme;
   }
 
-  NG.UI = { $, esc, n0, n1, ic, ring, bar, pills, qty, frac, fdate, open, update, close, closeAll, isOpen, confirm, toast, copy, wa, phone, share, paint, enter, theme };
+  NG.UI = { $, esc, n0, n1, ic, ring, bar, pills, qty, frac, fdate, open, update, close, closeAll, isOpen, confirm, toast, copy, wa, phone, share, paint, mute, enter, theme };
 
   document.addEventListener('click', e => { const b = e.target.closest('[data-ui=close]'); if (b) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && stack.length && !stack[stack.length - 1].o.noClose) close(); });
