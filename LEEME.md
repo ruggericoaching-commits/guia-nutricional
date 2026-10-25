@@ -1,6 +1,9 @@
 # Guía Nutricional — mini app para tus asesorados
 
 App web instalable (PWA) que funciona en cualquier celular, **sin servidores, sin bases de datos y sin costo**.
+
+**Publicada en:** https://ruggericoaching-commits.github.io/guia-nutricional/
+**Tu panel:** https://ruggericoaching-commits.github.io/guia-nutricional/#coach
 Tiene tres partes en un mismo sitio:
 
 | Parte | Dirección | Quién la usa |
