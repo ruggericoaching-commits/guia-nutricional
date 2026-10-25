@@ -198,9 +198,9 @@
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
       ${layout([
         [ph && d === today ? phaseCard(ph) : '', 'b'],
-        [d === today && photoDue() ? `<section class="card tipc"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Subilas a tu carpeta de Drive, en «03 Fotos de Progreso» (la misma carpeta de tus videos).</p></section>` : '', 'b'],
+        [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Subilas a tu carpeta de Drive, en «03 Fotos de Progreso» (la misma carpeta de tus videos).</p></section>` : '', 'b'],
         [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>. Así la abrís como una app y tus datos quedan guardados.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : '', 'b'],
-      [`<section class="card">
+      [`<section class="card t-lime">
         <div class="row between"><h3>Tu día</h3><span class="mut sm">objetivo ${n0(T.k)} kcal</span></div>
         <div class="kc"><b>${n0(tt.k)}</b><span>/ ${n0(T.k)} kcal (estimado según lo que marcaste)</span></div>
         ${bar(tt.k, T.k, 'var(--acc)')}
@@ -210,7 +210,7 @@
           <div><span class="dot f"></span>Grasas<b>${n0(tt.f)} / ${n0(T.f)} g</b>${bar(tt.f, T.f, 'var(--F)')}</div>
         </div>
       </section>`, 'a'],
-      [`<section class="card">
+      [`<section class="card t-amber">
         <div class="row between"><h3>Comidas</h3><span class="mut sm">tocá ✓ cuando la hagas</span></div>
         <div class="tl">${ms.map(m => {
           const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
@@ -223,13 +223,13 @@
         }).join('')}</div>
         ${freePerWeek() ? `<button class="freeline" data-a="free">🍕 Comida libre planificada <b>${fl ? leftTxt(fl) + ' esta semana' : 'ya la usaste esta semana'}</b></button>` : ''}
       </section>`, 'a'],
-      [`<section class="card">
+      [`<section class="card t-sky">
         <div class="row between"><h3>💧 Agua</h3><span class="mut sm">${n1(w * 0.25)} / ${n1(g * 0.25)} L</span></div>
         <div class="glasses">${Array.from({ length: g }, (_, i) => `<button class="gl ${i < w ? 'on' : ''}" data-a="wset" data-n="${i < w && i === w - 1 ? i : i + 1}" aria-label="Vaso ${i + 1}"></button>`).join('')}</div>
         <div class="row center gap"><button class="btn ghost sm" data-a="water" data-d="-1">− vaso</button><button class="btn pri sm" data-a="water" data-d="1">+ vaso</button></div>
       </section>`, 'b'],
-        [tip ? `<section class="card tip"><div class="tip-e">${tip[0]}</div><div><b>${esc(tip[1])}</b><p class="sm">${esc(tip[2])}</p></div></section>` : '', 'b'],
-        [P.ms ? `<section class="card coachmsg"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
+        [tip ? `<section class="card tip t-mint"><div class="tip-e">${tip[0]}</div><div><b>${esc(tip[1])}</b><p class="sm">${esc(tip[2])}</p></div></section>` : '', 'b'],
+        [P.ms ? `<section class="card coachmsg t-lime"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
       ])}
       <p class="disc">Esta guía es orientativa y no reemplaza la consulta médica. Ante cualquier condición de salud, consultá con tu médico.</p>`;
   }
@@ -260,11 +260,12 @@
     const L = peek(S.today()), next = meals().find(m => L.m[m.i] == null) || meals()[0];
     return next ? next.i : null;
   }
+  const MEAL_TONE = { desayuno: 'amber', almuerzo: 'coral', merienda: 'violet', cena: 'sky', colacion: 'mint' };
   function vPlan() {
     const P = PL(), T = P.t;
     return `${hero('Tu plan', `${n0(T.k)} kcal por día · ${meals().length} comidas`)}
       ${layout([
-      [`<section class="card targets">
+      [`<section class="card targets t-lime">
         <div class="tg"><b>${n0(T.p)} g</b><span><i class="dot p"></i>Proteína</span></div>
         <div class="tg"><b>${n0(T.c)} g</b><span><i class="dot c"></i>Carbohidratos</span></div>
         <div class="tg"><b>${n0(T.f)} g</b><span><i class="dot f"></i>Grasas</span></div>
@@ -272,14 +273,14 @@
         <div class="tg"><b>${n1(T.w / 1000)} L</b><span>💧 Agua</span></div>
       </section>`, 'b'],
       [`<p class="sm mut center">Cada comida tiene opciones equivalentes: elegí la que quieras. Tocá un alimento para ver con qué reemplazarlo.</p>`, 'b'],
-      [`<details class="card measures"><summary>📏 ¿No tenés balanza? Medidas caseras</summary>
+      [`<details class="card measures t-mint"><summary>📏 ¿No tenés balanza? Medidas caseras</summary>
         <p class="sm mut">No hace falta pesar todo. Las primeras semanas usá estas medidas y después ya lo vas a calcular a ojo.</p>
         <div class="mlist">${NG.MEASURES.map(([e, t, x]) => `<div><span>${e}</span><p class="sm"><b>${esc(t)}:</b> ${esc(x)}</p></div>`).join('')}</div></details>`, 'b'],
       [meals().map(m => {
         const open = openId() === m.i;
         const sel = Math.min(st.sel[m.i] ?? Math.max(0, peek(S.today()).m[m.i] ?? 0), m.o.length - 1);
         const o = m.o[sel];
-        return `<section class="card meal ${open ? 'open' : ''}" id="meal-${m.i}">
+        return `<section class="card meal t-${MEAL_TONE[m.y] || 'lime'} ${open ? 'open' : ''}" id="meal-${m.i}">
           <button class="meal-h" data-a="mtoggle" data-m="${m.i}"><span class="me">${(NG.MEAL_TYPES[m.y] || {}).e || '🍽️'}</span>
             <span class="mn"><b>${esc(m.n)}</b><small>${esc(m.h || '')}${m.g && m.g !== 'normal' ? ` · ${NG.TAGS[m.g]}` : ''} · ${(NG.CTX[m.x] || {}).e || ''} ${(NG.CTX[m.x] || {}).n || ''}</small></span>
             <span class="mk">${n0(m.t[0])}<small>kcal</small></span>${ic(open ? 'chevU' : 'chevD', 18)}</button>
@@ -306,33 +307,33 @@
     const stops = plate.map(([, , p, c]) => { const s = `${c} ${acc}% ${acc + p}%`; acc += p; return s; }).join(',');
     return `${hero('Comer afuera', 'Cómo seguir tu plan en cualquier lugar')}
       ${layout([
-      [`<section class="card">
+      [`<section class="card t-amber">
         <h3>🖐️ El método de la mano</h3>
         <p class="sm mut">Tu mano es tu medida: siempre la llevás y es proporcional a tu cuerpo. Elegí una comida y mirá tus porciones:</p>
         <div class="chips">${ms.map(m => `<button class="chip ${m === hm ? 'on' : ''}" data-a="hm" data-m="${m.i}">${esc(m.n)}</button>`).join('')}</div>
         ${hm ? handsBlock(tgt(hm), hm.y) : ''}
         <div class="hlegend">${NG.HANDS.map(x => `<div><span>${x.e}</span><p class="sm"><b>${x.n} = ${x.w}.</b> ${esc(x.d)}</p></div>`).join('')}</div>
       </section>`, 'a'],
-      [`<section class="card">
+      [`<section class="card t-mint">
         <h3>🍽️ El plato ideal</h3>
         <div class="plate-w"><div class="plate" style="background:conic-gradient(${stops})"></div>
           <div class="plate-l">${plate.map(([e, n, p, c]) => `<div><i style="background:${c}"></i>${e} ${n} <b>${p === 34 || p === 33 ? '⅓' : p === 50 ? '½' : '¼'}</b></div>`).join('')}<div><i style="background:var(--F)"></i>🫒 + 1 porción de grasa saludable</div></div></div>
       </section>`, 'b'],
       [`<h3 class="sec">📍 Según dónde estés</h3>`, 'a'],
-      [NG.PLACES.map((p, i) => `<section class="card acc ${st.place === i ? 'open' : ''}">
+      [NG.PLACES.map((p, i) => `<section class="card acc t-coral ${st.place === i ? 'open' : ''}">
         <button class="acc-h" data-a="place" data-i="${i}"><span>${p.e}</span><b>${esc(p.t)}</b>${ic(st.place === i ? 'chevU' : 'chevD', 18)}</button>
         ${st.place === i ? `<div class="acc-b"><div class="good"><b>✅ Mejores elecciones</b><ul>${p.best.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
           <div class="mod"><b>⚠️ Con moderación</b><ul>${p.mod.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
           ${p.tip ? `<p class="sm tipline">💡 ${esc(p.tip)}</p>` : ''}</div>` : ''}</section>`).join(''), 'a'],
-      [`<section class="card"><h3>🏷️ Cómo leer etiquetas</h3><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
-      [`<section class="card"><h3>🍷 Alcohol</h3><ul class="clean">${NG.ALCOHOL_TIPS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
+      [`<section class="card t-sky"><h3>🏷️ Cómo leer etiquetas</h3><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
+      [`<section class="card t-violet"><h3>🍷 Alcohol</h3><ul class="clean">${NG.ALCOHOL_TIPS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
       ])}`;
   }
 
   /* HÁBITOS */
   const HABITS = [['veg', '🥦', 'Comí verduras en almuerzo y cena'], ['sueno', '😴', 'Dormí 7 horas o más'], ['mov', '🚶', 'Me moví / hice mis pasos']];
   function phaseCard(ph, full) {
-    return `<section class="card phase"><div class="row between"><b>${ph.ph.e} Fase ${ph.idx + 1} de 3 · ${ph.ph.n}</b><span class="mut sm">${ph.idx < 2 ? `semana ${ph.inPhase} de 2` : `semana ${ph.week}`}</span></div>
+    return `<section class="card phase t-violet"><div class="row between"><b>${ph.ph.e} Fase ${ph.idx + 1} de 3 · ${ph.ph.n}</b><span class="mut sm">${ph.idx < 2 ? `semana ${ph.inPhase} de 2` : `semana ${ph.week}`}</span></div>
       <div class="phbar">${NG.PHASES.map((_, i) => `<i class="${i < ph.idx ? 'done' : i === ph.idx ? 'on' : ''}"></i>`).join('')}</div>
       <p class="sm"><b>Tu foco:</b> ${esc(ph.ph.focus)}</p>
       <div class="row between sm mut"><span>Meta: ${ph.ph.goal}% de las comidas</span>${full ? '' : `<button class="link sm" data-a="tab" data-t="habitos">Mis hábitos de la fase ›</button>`}</div>
@@ -343,13 +344,13 @@
     return `${hero('Hábitos', ph ? `Fase ${ph.idx + 1}: ${ph.ph.n}` : 'Lo que más impacto tiene en tus resultados')}
       ${layout([
         [ph ? phaseCard(ph, true) : '', 'a'],
-        [P.ms ? `<section class="card coachmsg"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
-      [`<section class="card"><h3>✅ Hoy</h3>
+        [P.ms ? `<section class="card coachmsg t-lime"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
+      [`<section class="card t-mint"><h3>✅ Hoy</h3>
         ${habitList().map(([k, e, n]) => `<button class="hab ${L.h && L.h[k] ? 'on' : ''}" data-a="habit" data-h="${k}"><span class="tck">${L.h && L.h[k] ? ic('check', 16) : ''}</span>${e} ${n}</button>`).join('')}
         <button class="hab ${(L.w || 0) >= glasses() ? 'on' : ''}" data-a="tab" data-t="hoy"><span class="tck">${(L.w || 0) >= glasses() ? ic('check', 16) : ''}</span>💧 Tomé mi agua (${L.w || 0}/${glasses()} vasos)</button>
       </section>`, 'b'],
       [`<h3 class="sec">💡 Tus recomendaciones</h3>`, 'a'],
-      [`<div class="recs">${(P.r || []).map(([e, t, x]) => `<section class="card rec"><span class="rec-e">${e}</span><div><b>${esc(t)}</b><p class="sm">${esc(x)}</p></div></section>`).join('')}</div>`, 'a'],
+      [`<div class="recs">${(P.r || []).map(([e, t, x]) => `<section class="card rec t-sky"><span class="rec-e">${e}</span><div><b>${esc(t)}</b><p class="sm">${esc(x)}</p></div></section>`).join('')}</div>`, 'a'],
       ])}
       <p class="disc">Ante cualquier duda sobre suplementos o condiciones de salud, consultá con tu médico.</p>`;
   }
@@ -376,20 +377,20 @@
     const cells = Array.from({ length: 28 }, (_, i) => S.addDays(today, i - 27));
     return `${hero('Tu progreso', 'Lo que se mide, se mejora')}
       ${layout([
-      [`<section class="card">
+      [`<section class="card t-sky">
         <h3>⚖️ Registrar peso de hoy</h3>
         <div class="row gap"><label class="fld grow"><span>Peso (kg)</span><input id="wkg" type="text" inputmode="decimal" autocomplete="off" value="${tw ? tw.kg : ''}" placeholder="Ej: 72,5"></label>
         <label class="fld grow"><span>Cintura (cm, opcional)</span><input id="wcin" type="text" inputmode="decimal" autocomplete="off" value="${tw && tw.cin ? tw.cin : ''}" placeholder="Ej: 84"></label></div>
         <button class="btn pri block" data-a="wsave">Guardar</button>
         <p class="sm mut">En ayunas, después de ir al baño. Lo importante es el promedio de la semana.</p>
       </section>`, 'b'],
-      [`<section class="card stats">
+      [`<section class="card stats t-lime">
         <div><small>Promedio 7 días</small><b>${wk.avg ? n1(wk.avg) + ' kg' : '—'}</b></div>
         <div><small>vs semana anterior</small><b class="${diff == null ? '' : diff < 0 ? 'down' : 'up'}">${diff == null ? '—' : (diff > 0 ? '+' : '') + n1(diff) + ' kg'}</b></div>
         <div><small>Adherencia 7 días</small><b>${wk.adh == null ? '—' : wk.adh + '%'}</b></div>
       </section>`, 'a'],
-      [`<section class="card"><h3>📉 Evolución</h3>${chart(ws)}</section>`, 'a'],
-      [`<section class="card"><h3>🗓️ Últimas 4 semanas</h3>
+      [`<section class="card t-lime"><h3>📉 Evolución</h3>${chart(ws)}</section>`, 'a'],
+      [`<section class="card t-amber"><h3>🗓️ Últimas 4 semanas</h3>
         <div class="heat">${cells.map(d => { const n = meals().length, dn = st.data.logs[d] && Object.keys(st.data.logs[d].m || {}).length ? doneCount(d) / n : -1; return `<i title="${fdate(d)}" class="${dn < 0 ? '' : dn >= 0.9 ? 'l4' : dn >= 0.6 ? 'l3' : dn >= 0.3 ? 'l2' : 'l1'}${d === today ? ' today' : ''}"></i>`; }).join('')}</div>
         <div class="row between sm mut"><span>Menos</span><span class="heat-k"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span><span>Más</span></div>
       </section>`, 'b'],

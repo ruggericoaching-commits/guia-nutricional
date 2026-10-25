@@ -190,6 +190,7 @@
   }
 
   // Barra lateral (solo en PC): navegación, buscador y todos los alumnos a mano
+  const tone = n => ['lime', 'sky', 'coral', 'amber', 'violet', 'mint'][[...String(n || '')].reduce((h, c) => h + c.charCodeAt(0), 0) % 6];
   const ini = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
   const ago = d => { const n = Math.round((Date.parse(S.today()) - Date.parse(d)) / 864e5); return n <= 0 ? 'hoy' : n === 1 ? 'ayer' : `hace ${n} días`; };
   function side() {
@@ -206,7 +207,7 @@
       <div class="side-sec"><span class="eyebrow">Alumnos · ${Object.keys(D.clients).length}</span><button class="ib sm" data-a="newc" aria-label="Nuevo alumno">${ic('plus', 15)}</button></div>
       <input class="search" type="search" placeholder="Buscar…" value="${esc(cs.q)}" data-live="q" data-k="q-side">
       <div class="side-list">${list.map(c => `<button class="side-c ${c.id === sel ? 'on' : ''}" data-a="open" data-id="${c.id}">
-        <span class="av">${esc(ini(c.profile.name))}</span><span class="grow"><b>${esc(c.profile.name || 'Sin nombre')}</b><small>${esc((NG.GOALS[c.profile.goal] || {}).n || '')}</small></span><i class="st ${status(c)[0]}"></i></button>`).join('') || '<p class="sm mut">Sin resultados.</p>'}</div>
+        <span class="av t-${tone(c.profile.name)}">${esc(ini(c.profile.name))}</span><span class="grow"><b>${esc(c.profile.name || 'Sin nombre')}</b><small>${esc((NG.GOALS[c.profile.goal] || {}).n || '')}</small></span><i class="st ${status(c)[0]}"></i></button>`).join('') || '<p class="sm mut">Sin resultados.</p>'}</div>
       <div class="side-f"><button class="link sm" data-a="formlink">Link del formulario</button><button class="ib sm" data-a="lock" aria-label="Bloquear">${ic('lock', 15)}</button></div>
     </aside>`;
   }
@@ -260,9 +261,9 @@
     const mon = S.addDays(today, -((new Date(today + 'T12:00:00').getDay() + 6) % 7));
     const days = Array.from({ length: 7 }, (_, i) => S.addDays(mon, i));
     const got = d => Object.values(D.clients).filter(c => (c.checkins || []).some(k => k.date === d)).length;
-    return `<section class="card agenda"><div class="row between"><h3>Esta semana</h3><span class="sm mut">${fdate(today, true)}</span></div>
+    return `<section class="card agenda t-violet"><div class="row between"><h3>Esta semana</h3><span class="sm mut">${fdate(today, true)}</span></div>
       <div class="wk">${days.map(d => { const n = got(d); return `<div class="${d === today ? 'on' : ''} ${d > today ? 'fut' : ''}"><small>${fdate(d).split(' ')[0]}</small><b>${+d.slice(8)}</b><i>${'<u></u>'.repeat(Math.min(n, 3))}</i></div>`; }).join('')}</div>
-      ${blocks.length ? blocks.map(([e, t, arr, act]) => `<div class="wbsec"><b>${e} ${t}<span class="cnt">${arr.length}</span></b>${arr.map(c => `<div class="wbrow"><button class="who" data-a="open" data-id="${c.id}"><span class="av sm">${esc(ini(c.profile.name))}</span>${esc(c.profile.name || 'Sin nombre')}</button>${act(c)}</div>`).join('')}</div>`).join('')
+      ${blocks.length ? blocks.map(([e, t, arr, act]) => `<div class="wbsec"><b>${e} ${t}<span class="cnt">${arr.length}</span></b>${arr.map(c => `<div class="wbrow"><button class="who" data-a="open" data-id="${c.id}"><span class="av sm t-${tone(c.profile.name)}">${esc(ini(c.profile.name))}</span>${esc(c.profile.name || 'Sin nombre')}</button>${act(c)}</div>`).join('')}</div>`).join('')
         : '<div class="allok"><b>Todo al día</b><span class="sm mut">No hay nada pendiente esta semana.</span></div>'}
     </section>`;
   }
@@ -276,12 +277,12 @@
     const pend = [['Check-ins', P.missing], ['Molestias', P.pain], ['Fotos', P.photos], ['Sin enviar', P.unsent]];
     const total = pend.reduce((s, [, l]) => s + l.length, 0);
     return `<div class="kpis">
-      <div class="kpi"><span class="eyebrow">Alumnos activos</span><b class="big">${active.length}</b><span class="sm mut">${all.length - active.length ? `+ ${all.length - active.length} sin plan enviado` : 'todos con plan enviado'}</span>
-        <div class="avs">${active.slice(0, 6).map(c => `<span class="av sm" title="${esc(c.profile.name)}">${esc(ini(c.profile.name))}</span>`).join('')}</div></div>
-      <div class="kpi row gap"><div class="grow"><span class="eyebrow">Check-ins · semana</span><b class="big">${got}<small>/${active.length}</small></b><span class="sm mut">${active.length - got ? `faltan ${active.length - got}` : 'llegaron todos'}</span></div>${U.ring(active.length ? got / active.length * 100 : 0, { size: 74, label: active.length ? Math.round(got / active.length * 100) + '%' : '—', color: 'var(--acc-ink)' })}</div>
-      <div class="kpi"><span class="eyebrow">Adherencia promedio</span><b class="big">${avg == null ? '—' : avg + '<small>%</small>'}</b>
+      <div class="kpi t-lime"><span class="eyebrow">Alumnos activos</span><b class="big">${active.length}</b><span class="sm mut">${all.length - active.length ? `+ ${all.length - active.length} sin plan enviado` : 'todos con plan enviado'}</span>
+        <div class="avs">${active.slice(0, 6).map(c => `<span class="av sm t-${tone(c.profile.name)}" title="${esc(c.profile.name)}">${esc(ini(c.profile.name))}</span>`).join('')}</div></div>
+      <div class="kpi row gap t-sky"><div class="grow"><span class="eyebrow">Check-ins · semana</span><b class="big">${got}<small>/${active.length}</small></b><span class="sm mut">${active.length - got ? `faltan ${active.length - got}` : 'llegaron todos'}</span></div>${U.ring(active.length ? got / active.length * 100 : 0, { size: 74, label: active.length ? Math.round(got / active.length * 100) + '%' : '—', color: 'var(--sky)' })}</div>
+      <div class="kpi t-amber"><span class="eyebrow">Adherencia promedio</span><b class="big">${avg == null ? '—' : avg + '<small>%</small>'}</b>
         <div class="bars">${adh.length ? adh.map(([c, a]) => `<i style="height:${Math.max(8, a)}%" class="${a >= 80 ? 'hi' : ''}" title="${esc(c.profile.name)}: ${a}%"></i>`).join('') : '<span class="sm mut">Sin check-ins todavía</span>'}</div></div>
-      <div class="kpi"><span class="eyebrow">Pendientes</span><b class="big">${total}</b>
+      <div class="kpi t-coral"><span class="eyebrow">Pendientes</span><b class="big">${total}</b>
         <div class="pend">${pend.map(([n, l]) => `<span class="${l.length ? 'has' : ''}"><b>${l.length}</b>${n}</span>`).join('')}</div></div>
     </div>`;
   }
@@ -292,7 +293,7 @@
         const T = E.targets(c), [sc, stx] = status(c), g = NG.GOALS[c.profile.goal] || {}, lc = lastCheckin(c);
         const d = lc && lc.avg && lc.prev ? lc.avg - lc.prev : null;
         return `<button class="rw" data-a="open" data-id="${c.id}">
-          <span class="rw-who"><span class="av">${esc(ini(c.profile.name))}</span><span class="grow"><b>${esc(c.profile.name || 'Sin nombre')}</b><small>${g.e || ''} ${g.n || ''}${medAlert(c) ? ' · <span class="bad-t">revisar salud</span>' : ''}</small></span></span>
+          <span class="rw-who"><span class="av t-${tone(c.profile.name)}">${esc(ini(c.profile.name))}</span><span class="grow"><b>${esc(c.profile.name || 'Sin nombre')}</b><small>${g.e || ''} ${g.n || ''}${medAlert(c) ? ' · <span class="bad-t">revisar salud</span>' : ''}</small></span></span>
           <span class="rw-plan"><b>${n0(T.kcal)}</b> kcal<small>P ${T.p} · C ${T.c} · G ${T.f}</small></span>
           <span class="rw-kg"><b>${n1(lc && lc.avg ? lc.avg : c.profile.weight)}</b> kg${d != null ? `<small class="${d < 0 ? 'dn' : 'up'}">${d > 0 ? '▲' : '▼'} ${n1(Math.abs(d))}</small>` : ''}</span>
           <span class="rw-adh">${lc && lc.adh != null ? `<span class="mbar"><i style="width:${lc.adh}%"></i></span><small>${lc.adh}%</small>` : '<small class="mut">—</small>'}</span>
@@ -347,10 +348,10 @@
         <div class="mix">${['p', 'c', 'f'].map((k, i) => `<i class="${k}" style="width:${kc[i] / tot * 100}%"></i>`).join('')}</div>
         <div class="mixl"><span><i class="dot p"></i>${T.p} g prot.</span><span><i class="dot c"></i>${T.c} g carbos</span><span><i class="dot f"></i>${T.f} g grasas</span></div></div>
       <div class="cs-grid">
-        <div><span class="eyebrow">Peso</span><b>${n1(lc && lc.avg ? lc.avg : p.weight)} kg</b>${p.targetWeight ? `<small>meta ${n1(p.targetWeight)} kg</small>` : ''}</div>
-        <div><span class="eyebrow">Semana</span><b>${ph ? ph.week : '—'}</b>${ph ? `<small>fase ${ph.idx + 1} · ${esc(ph.ph.n)}</small>` : '<small>sin plan enviado</small>'}</div>
-        <div><span class="eyebrow">Adherencia</span><b>${lc && lc.adh != null ? lc.adh + '%' : '—'}</b><small>último check-in</small></div>
-        <div><span class="eyebrow">Check-in</span><b>${lc ? ago(lc.date) : '—'}</b><small>${(cl.checkins || []).length} en total</small></div>
+        <div class="t-sky"><span class="eyebrow">Peso</span><b>${n1(lc && lc.avg ? lc.avg : p.weight)} kg</b>${p.targetWeight ? `<small>meta ${n1(p.targetWeight)} kg</small>` : ''}</div>
+        <div class="t-violet"><span class="eyebrow">Semana</span><b>${ph ? ph.week : '—'}</b>${ph ? `<small>fase ${ph.idx + 1} · ${esc(ph.ph.n)}</small>` : '<small>sin plan enviado</small>'}</div>
+        <div class="t-amber"><span class="eyebrow">Adherencia</span><b>${lc && lc.adh != null ? lc.adh + '%' : '—'}</b><small>último check-in</small></div>
+        <div class="t-lime"><span class="eyebrow">Check-in</span><b>${lc ? ago(lc.date) : '—'}</b><small>${(cl.checkins || []).length} en total</small></div>
       </div>
       ${spark ? `<div class="cs-trend"><span class="eyebrow">Tendencia de peso</span>${spark}<div class="row between sm mut"><span>${n1(ws[0])} kg</span><span>${n1(ws[ws.length - 1])} kg</span></div></div>` : ''}
       <div class="stack"><button class="btn pri block" data-a="tab" data-t="enviar">${ic('send', 16)} Enviar plan</button>
@@ -385,58 +386,51 @@
     const p = cl.profile;
     const exGroups = Object.entries(NG.DISLIKES).map(([k, ids]) => [k, ids]);
     const otherEx = (p.exclude || []).filter(id => !exGroups.some(([, ids]) => ids.includes(id)));
-    return `<div class="cols">
-      <section class="card"><h3>👤 Datos personales</h3>
-        ${fi('Nombre y apellido', 'profile.name')}${fi('WhatsApp del alumno', 'profile.phone', { type: 'tel', ph: 'Ej: 5491122334455', hint: 'Con código de país, para enviarle el plan en un toque.' })}
+    // Una sola hoja con secciones numeradas: título y para qué sirve a la izquierda, campos a la derecha
+    const secs = [
+      ['datos', 'sky', 'Datos personales', 'Quién es y sus medidas. Con esto se calcula su gasto.', `
+        <div class="grid2">${fi('Nombre y apellido', 'profile.name')}${fi('WhatsApp del alumno', 'profile.phone', { type: 'tel', ph: 'Ej: 5491122334455', hint: 'Con código de país, para enviarle el plan en un toque.' })}</div>
         ${fchips('Sexo biológico', 'profile.sex', [['M', 'Masculino'], ['F', 'Femenino']])}
         <div class="grid3">${fi('Edad', 'profile.age', { num: 1 })}${fi('Altura (cm)', 'profile.height', { num: 1 })}${fi('Peso (kg)', 'profile.weight', { num: 1 })}</div>
-        <div class="grid3">${fi('% grasa', 'profile.bf', { num: 1, ph: 'opcional' })}${fi('Cintura (cm)', 'profile.waist', { num: 1, ph: 'opcional' })}${fi('Peso objetivo', 'profile.targetWeight', { num: 1, ph: 'opcional' })}</div>
-      </section>
-      <section class="card"><h3>🎯 Objetivo</h3>
+        <div class="grid3">${fi('% grasa', 'profile.bf', { num: 1, ph: 'opcional' })}${fi('Cintura (cm)', 'profile.waist', { num: 1, ph: 'opcional' })}${fi('Peso objetivo', 'profile.targetWeight', { num: 1, ph: 'opcional' })}</div>`],
+      ['objetivo', 'lime', 'Objetivo', 'Qué quiere lograr y a qué ritmo.', `
         ${fchips('Objetivo', 'profile.goal', Object.entries(NG.GOALS).map(([k, g]) => [k, g.e + ' ' + g.n]))}
         ${NG.RATES[p.goal] ? fchips('Velocidad', 'profile.rate', Object.entries(NG.RATES[p.goal])) : ''}
-        ${ftext('Motivación', 'profile.motivation')}
-      </section>
-      <section class="card"><h3>🏃 Actividad</h3>
-        ${fsel('Actividad diaria (sin el entrenamiento)', 'profile.activity', Object.entries(NG.ACTIVITY).map(([k, a]) => [k, `${a.n} — ${a.d}`]))}
+        ${ftext('Motivación', 'profile.motivation')}`],
+      ['actividad', 'amber', 'Actividad', 'Cuánto se mueve en el día y cuánto entrena.', `
+        <div class="grid2">${fsel('Actividad diaria (sin el entrenamiento)', 'profile.activity', Object.entries(NG.ACTIVITY).map(([k, a]) => [k, `${a.n} — ${a.d}`]))}${fsel('Horario de entrenamiento', 'profile.trainTime', Object.entries(NG.TRAIN_TIME).map(([k, t]) => [k, t.n]))}</div>
         ${(p.training || []).map((t, i) => `<div class="trow"><div class="grid3">${fsel('Entrenamiento', `profile.training.${i}.type`, Object.entries(NG.TRAIN))}${fi('Días/sem', `profile.training.${i}.days`, { num: 1 })}${fi('Minutos', `profile.training.${i}.min`, { num: 1 })}</div>
           <button class="link sm danger-t" data-a="trdel" data-i="${i}">Quitar</button></div>`).join('')}
-        <button class="btn ghost sm" data-a="tradd">${ic('plus', 15)} Agregar entrenamiento</button>
-        ${fsel('Horario de entrenamiento', 'profile.trainTime', Object.entries(NG.TRAIN_TIME).map(([k, t]) => [k, t.n]))}
-      </section>
-      <section class="card"><h3>🏋️ Entrenamiento</h3>
-        ${fchips('Plan contratado', 'profile.planType', Object.entries(NG.PLAN_TYPES))}
+        <button class="btn ghost sm" data-a="tradd">${ic('plus', 15)} Agregar entrenamiento</button>`],
+      ['entreno', 'coral', 'Entrenamiento', 'Su experiencia, su equipamiento y lo que tenés que cuidar.', `
+        <div class="grid2">${fchips('Plan contratado', 'profile.planType', Object.entries(NG.PLAN_TYPES))}${fchips('Equipamiento', 'profile.equipment', Object.entries(NG.EQUIPMENT))}</div>
         ${fchips('Experiencia con cargas', 'profile.experience', Object.entries(NG.EXPERIENCE))}
-        ${fchips('Equipamiento', 'profile.equipment', Object.entries(NG.EQUIPMENT))}
-        ${ftext('Lesiones, cirugías o molestias', 'profile.injuries', 'Ninguna')}
-        ${ftext('Marcas aproximadas (sentadilla, banca, peso muerto, hip thrust, remo)', 'profile.lifts')}
-        ${ftext('Objetivos secundarios y plazo', 'profile.goal2')}
-        <div class="grid2">${fi('Ocupación y horarios', 'profile.occupation')}${fi('Instagram', 'profile.instagram', { ph: '@usuario' })}</div>
-        ${fi('📁 Carpeta del alumno en Drive (link)', 'profile.drive', { type: 'url', ph: 'https://drive.google.com/drive/folders/…', hint: 'Pegá el link de su carpeta en 02_ALUMNOS: te aparece un botón para abrirla directo.' })}
-      </section>
-      <section class="card"><h3>🍳 Contexto</h3>
-        ${fchips('¿Cocina?', 'profile.cooking', Object.entries(NG.COOKING))}
+        <div class="grid2">${ftext('Lesiones, cirugías o molestias', 'profile.injuries', 'Ninguna')}${ftext('Marcas aproximadas (sentadilla, banca, peso muerto, hip thrust, remo)', 'profile.lifts')}</div>
+        <div class="grid2">${ftext('Objetivos secundarios y plazo', 'profile.goal2')}${fi('Ocupación y horarios', 'profile.occupation')}</div>
+        <div class="grid2">${fi('Instagram', 'profile.instagram', { ph: '@usuario' })}${fi('📁 Carpeta del alumno en Drive (link)', 'profile.drive', { type: 'url', ph: 'https://drive.google.com/drive/folders/…', hint: 'Pegá el link de su carpeta en 02_ALUMNOS: te aparece un botón para abrirla directo.' })}</div>`],
+      ['contexto', 'mint', 'Contexto', 'Si cocina, si lleva vianda y cuánto puede gastar.', `
+        <div class="grid2">${fchips('¿Cocina?', 'profile.cooking', Object.entries(NG.COOKING))}${fchips('Presupuesto', 'profile.budget', Object.entries(NG.BUDGET))}</div>
         ${fchips('¿Puede llevar vianda/tupper?', 'profile.tupper', [['true', 'Sí'], ['false', 'No']], false, 'bool')}
-        ${fchips('Presupuesto', 'profile.budget', Object.entries(NG.BUDGET))}
-        <p class="sm mut">Los horarios y dónde come cada comida se editan en la pestaña <b>Plan</b>.</p>
-      </section>
-      <section class="card"><h3>🥗 Alimentación</h3>
-        ${fchips('Tipo de dieta', 'profile.diet', [3, 2, 1, 0].map(k => [String(k), NG.DIETAS[k]]), false, 'num')}
+        <p class="sm mut">Los horarios y dónde come cada comida se editan en la pestaña <b>Plan</b>.</p>`],
+      ['alimentacion', 'violet', 'Alimentación', 'Qué come, qué no y qué se excluye del plan.', `
+        <div class="grid2">${fchips('Tipo de dieta', 'profile.diet', [3, 2, 1, 0].map(k => [String(k), NG.DIETAS[k]]), false, 'num')}${fchips('Alcohol', 'profile.alcohol', Object.entries(NG.ALCOHOL))}</div>
         ${fchips('Alergias / intolerancias (se excluyen del plan)', 'profile.allergens', Object.entries(NG.ALG), true)}
         <div class="fld"><span>No le gusta (se excluye del plan automático)</span><div class="chips">${exGroups.map(([k, ids]) => `<button class="chip ${ids.every(id => (p.exclude || []).includes(id)) ? 'on' : ''}" data-a="exgrp" data-v="${esc(k)}">${esc(k)}</button>`).join('')}</div>
           <div class="chips">${otherEx.map(id => `<span class="chip on">${esc((NG.food(id) || { n: id }).n)} <button class="x" data-a="exdel" data-f="${id}">×</button></span>`).join('')}<button class="chip" data-a="pick" data-mode="ex">${ic('plus', 13)} Otro alimento</button></div></div>
-        ${ftext('Otros que no le gustan (texto)', 'profile.dislikes')}${ftext('Le encanta', 'profile.likes')}
-        ${fchips('Alcohol', 'profile.alcohol', Object.entries(NG.ALCOHOL))}
-        ${fi('Suplementos actuales', 'profile.supplements')}
-      </section>
-      <section class="card"><h3>🩺 Salud</h3>
+        <div class="grid2">${ftext('Otros que no le gustan (texto)', 'profile.dislikes')}${ftext('Le encanta', 'profile.likes')}</div>
+        ${fi('Suplementos actuales', 'profile.supplements')}`],
+      ['salud', 'coral', 'Salud', 'Condiciones que cambian el plan o que requieren derivación.', `
         ${fchips('Condiciones', 'profile.medical', NG.MED.map(m => [m.id, m.n]), true)}
-        ${fi('Otra condición / medicación', 'profile.medicalText')}
-        <div class="grid2">${fi('Horas de sueño', 'profile.sleep', { num: 1 })}${fi('Estrés (1–5)', 'profile.stress', { num: 1 })}</div>
-      </section>
-      <section class="card"><h3>🗒️ Notas privadas</h3>${ftext('Solo las ves vos (no se envían al alumno)', 'profile.notes', 'Lesiones, preferencias, acuerdos…')}
-        <button class="btn ghost sm danger-t" data-a="delc">${ic('trash', 15)} Eliminar alumno</button></section>
-    </div>`;
+        <div class="grid3">${fi('Otra condición / medicación', 'profile.medicalText')}${fi('Horas de sueño', 'profile.sleep', { num: 1 })}${fi('Estrés (1–5)', 'profile.stress', { num: 1 })}</div>`],
+      ['notas', 'sky', 'Notas privadas', 'Solo las ves vos: no se envían al alumno.', `
+        ${ftext('Notas', 'profile.notes', 'Lesiones, preferencias, acuerdos…')}
+        <button class="btn ghost sm danger-t" data-a="delc">${ic('trash', 15)} Eliminar alumno</button>`],
+    ];
+    const num = i => String(i + 1).padStart(2, '0');
+    return `<nav class="fidx">${secs.map(([id, tone, title], i) => `<button class="t-${tone}" data-a="jump" data-id="fs-${id}"><i>${num(i)}</i>${title}</button>`).join('')}</nav>
+      <div class="fsheet">${secs.map(([id, tone, title, desc, body], i) => `<section class="fsec t-${tone}" id="fs-${id}">
+        <header><span class="fnum">${num(i)}</span><div><h3>${title}</h3><p class="sm mut">${desc}</p></div></header>
+        <div class="fbody">${body}</div></section>`).join('')}</div>`;
   }
 
   function tObjetivos(cl) {
@@ -745,6 +739,7 @@
     const done = (msg) => { touch(cl); if (msg) U.toast(msg); render(); };
     switch (a) {
       case 'go': location.hash = ds.h; return;
+      case 'jump': { const s = document.getElementById(ds.id); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       case 'lock': sessionStorage.removeItem('ng_unlock'); return mount(cs.route);
       case 'open': cs.tab = 'perfil'; location.hash = '#coach/c/' + ds.id; return;
       case 'tab': cs.tab = ds.t; history.replaceState(null, '', '#coach/c/' + cl.id + '/' + ds.t); cs.route[3] = ds.t; window.scrollTo(0, 0); U.enter(); return render();
