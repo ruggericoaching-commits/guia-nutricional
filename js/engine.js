@@ -364,17 +364,6 @@
     return cb ? comboToOption(cb, m, p) : null;
   }
 
-  /* ── Método de la mano ─────────────────────────────────────────── */
-  function hands(t, type) {
-    const h = x => Math.max(0, Math.round(x * 2) / 2);
-    const main = type === 'almuerzo' || type === 'cena';
-    const palm = h(t.p / 25);
-    return {
-      palm, fist: main ? 2 : 0,
-      cup: h(Math.max(0, t.c - (main ? 10 : 0)) / 25),
-      thumb: h(Math.max(0, t.f - palm * 4) / 10),
-    };
-  }
 
   /* ── Equivalencias: mismo grupo, igualando el macro principal ──── */
   function exchanges(id, g, rules) {
@@ -424,7 +413,7 @@
     const fr = cl.plan && cl.plan.free != null ? +cl.plan.free : 1;
     if (fr > 0) add('libre', '🍕', fr === 1 ? 'Tu comida libre de la semana' : `Tus ${fr} comidas libres de la semana`, `Tenés ${fr === 1 ? 'una comida libre' : fr + ' comidas libres'} por semana. Elegí el momento, disfrutala sin culpa, comé una porción normal con algo de proteína y volvé al plan en la comida siguiente. No se acumula de una semana a otra.`);
     add('lento', '🍽️', 'Comé despacio y sin pantallas', 'Tomate 15 a 20 minutos por comida, masticá bien y pará cuando estés satisfecho, no lleno.', false);
-    if (outside) add('planif', '🗓️', 'Planificá las comidas de afuera', 'Antes de salir, decidí qué y dónde vas a comer. Usá la sección «Afuera» y el método de la mano para armar tu plato en cualquier lugar.');
+    if (outside) add('planif', '🗓️', 'Planificá las comidas de afuera', 'Antes de salir, decidí qué y dónde vas a comer. Usá la sección «Afuera» para elegir bien en cualquier lugar.');
     if (p.cooking === 'cocina' && p.tupper) add('prep', '🥡', 'Cociná una vez, comé varias', 'Dedicá 1 o 2 momentos por semana a cocinar proteínas y carbohidratos en cantidad. En heladera duran 3 a 4 días; el resto, al freezer.');
     if (p.cooking !== 'cocina') add('etiq', '🏷️', 'Leé las etiquetas', 'Menos sellos negros = mejor elección. Mirá la porción y cuánta proteína y azúcar aporta.');
     if (trains) {
@@ -511,6 +500,6 @@
 
   NG.E = {
     r, uid, mac, sum, targets, warnings, defaultMeals, tagTraining, distribute, fit, isFixed,
-    allowedFood, cookLevel, genPlan, buildOptions, anotherOption, flexOption, hands, exchanges, recs, activeRecs, analyze, toH, phaseOf, weekOf, photoDue,
+    allowedFood, cookLevel, genPlan, buildOptions, anotherOption, flexOption, exchanges, recs, activeRecs, analyze, toH, phaseOf, weekOf, photoDue,
   };
 })(window.NG);

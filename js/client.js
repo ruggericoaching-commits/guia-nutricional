@@ -158,7 +158,7 @@
     root.innerHTML = `<div class="wrap narrow welcome">
       <div class="logo-big">🥗</div>
       <h1>Tu guía nutricional</h1>
-      <p class="mut">Para ver tu plan, abrí el link que te envió tu entrenador.<br>Si instalaste la app y aparece vacía, pegá ese link acá:</p>
+      <p class="mut">Abrí el link que te mandó tu entrenador.<br>O pegalo acá:</p>
       <div class="card"><textarea id="w-code" rows="3" placeholder="Pegá aquí el link de tu plan"></textarea>
       <button class="btn pri block" data-a="w-import">${ic('dl')} Cargar mi plan</button></div>
       <button class="link mut sm" data-a="w-coach">${ic('lock', 14)} Acceso entrenador</button>
@@ -198,11 +198,11 @@
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
       ${layout([
         [ph && d === today ? phaseCard(ph) : '', 'b'],
-        [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Subilas a tu carpeta de Drive, en «03 Fotos de Progreso» (la misma carpeta de tus videos).</p></section>` : '', 'b'],
-        [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>. Así la abrís como una app y tus datos quedan guardados.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : '', 'b'],
+        [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">Frente, perfil y espalda. Subilas a tu Drive, en «03 Fotos de Progreso».</p></section>` : '', 'b'],
+        [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : '', 'b'],
       [`<section class="card t-lime">
         <div class="row between"><h3>Tu día</h3><span class="mut sm">objetivo ${n0(T.k)} kcal</span></div>
-        <div class="kc"><b>${n0(tt.k)}</b><span>/ ${n0(T.k)} kcal (estimado según lo que marcaste)</span></div>
+        <div class="kc"><b>${n0(tt.k)}</b><span>/ ${n0(T.k)} kcal</span></div>
         ${bar(tt.k, T.k, 'var(--acc)')}
         <div class="mgrid">
           <div><span class="dot p"></span>Proteína<b>${n0(tt.p)} / ${n0(T.p)} g</b>${bar(tt.p, T.p, 'var(--P)')}</div>
@@ -211,10 +211,10 @@
         </div>
       </section>`, 'a'],
       [`<section class="card t-amber">
-        <div class="row between"><h3>Comidas</h3><span class="mut sm">tocá ✓ cuando la hagas</span></div>
+        <div class="row between"><h3>Comidas</h3><span class="mut sm">${done}/${ms.length}</span></div>
         <div class="tl">${ms.map(m => {
           const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
-          const lbl = v == null ? '' : v === -1 ? '🧭 Comí afuera' : v === -2 ? '😅 Me salí del plan' : v === -3 ? '🍕 Comida libre' : (o ? o.n : '');
+          const lbl = v == null ? '' : v === -1 ? '🧭 Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? '🍕 Comida libre' : (o ? o.n : '');
           return `<div class="tli ${v == null ? '' : v === -2 ? 'off' : v === -3 ? 'done free' : 'done'}">
             <button class="tck" data-a="mcheck" data-m="${m.i}" aria-label="Marcar">${v == null ? '' : v === -2 ? '–' : v === -3 ? '🍕' : ic('check', 18)}</button>
             <div class="tlb" data-a="mopen" data-m="${m.i}"><div class="row between"><b>${(NG.MEAL_TYPES[m.y] || {}).e || '🍽️'} ${esc(m.n)}</b><span class="mut sm">${esc(m.h || '')}</span></div>
@@ -231,7 +231,7 @@
         [tip ? `<section class="card tip t-mint"><div class="tip-e">${tip[0]}</div><div><b>${esc(tip[1])}</b><p class="sm">${esc(tip[2])}</p></div></section>` : '', 'b'],
         [P.ms ? `<section class="card coachmsg t-lime"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
       ])}
-      <p class="disc">Esta guía es orientativa y no reemplaza la consulta médica. Ante cualquier condición de salud, consultá con tu médico.</p>`;
+      <p class="disc">Guía orientativa: no reemplaza la consulta médica.</p>`;
   }
 
   /* PLAN */
@@ -242,13 +242,8 @@
       <span class="it-e">${f.e}</span><span class="it-n">${esc(f.n)}${f.ap ? ' <small class="mut">(aprox.)</small>' : ''}<small>${n0(m.k)} kcal · P ${n0(m.p)} · C ${n0(m.c)} · G ${n0(m.f)}</small></span>
       <span class="it-q"><b>${q.main}</b>${q.sub ? `<small>${q.sub}</small>` : ''}</span><span class="it-s">${ic('swap', 15)}</span></button>`;
   }
-  function handsBlock(t, type, compact) {
-    const hd = E.hands(t, type);
-    const pn = { palm: 'Palmas', fist: 'Puños', cup: 'Manos ahuecadas', thumb: 'Pulgares' };
-    return `<div class="hands${compact ? ' compact' : ''}">${NG.HANDS.map(x => hd[x.k] ? `<div class="hand"><span class="he">${x.e}</span><b>${U.frac(hd[x.k])}</b><small>${hd[x.k] > 1 ? pn[x.k] : x.n}<br>${x.w}</small></div>` : '').join('')}</div>`;
-  }
   function optionBody(m, o) {
-    if (o.y) return `<div class="flex-o">${handsBlock(tgt(m), m.y)}<p class="sm pre">${esc(o.tx || '')}</p></div>`;
+    if (o.y) return `<p class="sm pre">${esc(o.tx || NG.FLEX[m.y === 'almuerzo' || m.y === 'cena' ? 'ac' : m.y === 'colacion' ? 'sn' : 'dm'])}</p>`;
     const t = E.sum(items(o));
     return `<div class="items">${items(o).map(itemRow).join('')}</div>
       <div class="otot">Total: ${pills(t, { sm: true })}</div>
@@ -272,9 +267,9 @@
         <div class="tg"><b>${n0(T.fi)} g</b><span>🌾 Fibra</span></div>
         <div class="tg"><b>${n1(T.w / 1000)} L</b><span>💧 Agua</span></div>
       </section>`, 'b'],
-      [`<p class="sm mut center">Cada comida tiene opciones equivalentes: elegí la que quieras. Tocá un alimento para ver con qué reemplazarlo.</p>`, 'b'],
+      [`<p class="sm mut center">Opciones equivalentes. Tocá un alimento para cambiarlo.</p>`, 'b'],
       [`<details class="card measures t-mint"><summary>📏 ¿No tenés balanza? Medidas caseras</summary>
-        <p class="sm mut">No hace falta pesar todo. Las primeras semanas usá estas medidas y después ya lo vas a calcular a ojo.</p>
+        <p class="sm mut">Si no tenés balanza, usá estas medidas.</p>
         <div class="mlist">${NG.MEASURES.map(([e, t, x]) => `<div><span>${e}</span><p class="sm"><b>${esc(t)}:</b> ${esc(x)}</p></div>`).join('')}</div></details>`, 'b'],
       [meals().map(m => {
         const open = openId() === m.i;
@@ -289,7 +284,7 @@
             ${m.o.length > 1 ? `<div class="seg">${m.o.map((x, i) => `<button class="${i === sel ? 'on' : ''}" data-a="opt" data-m="${m.i}" data-o="${i}">${x.y ? '🧭 ' : ''}Opción ${String.fromCharCode(65 + i)}</button>`).join('')}</div>` : ''}
             ${o ? `<h4 class="oname">${o.y ? '🧭 ' : ''}${esc(o.n)}</h4>${optionBody(m, o)}` : ''}
             ${m.no ? `<div class="note">📝 ${esc(m.no)}</div>` : ''}
-            <details class="out"><summary>🧭 ¿Comés afuera? Armá tu plato con la mano</summary>${handsBlock(tgt(m), m.y)}<p class="sm pre">${esc(NG.FLEX[m.y === 'almuerzo' || m.y === 'cena' ? 'ac' : m.y === 'colacion' ? 'sn' : 'dm'])}</p></details>
+            <details class="out"><summary>¿Comés afuera?</summary><p class="sm pre">${esc(NG.FLEX[m.y === 'almuerzo' || m.y === 'cena' ? 'ac' : m.y === 'colacion' ? 'sn' : 'dm'])}</p></details>
           </div>` : ''}
         </section>`;
       }).join(''), 'a'],
@@ -299,7 +294,6 @@
 
   /* AFUERA */
   function vAfuera() {
-    const ms = meals(), hm = ms.find(m => m.i === st.hm) || ms.find(m => m.y === 'almuerzo') || ms[0];
     const g = PL().cl.g, plate = g === 'ganar' || g === 'rend'
       ? [['🥦', 'Verduras', 34, 'var(--ok)'], ['🍗', 'Proteína', 33, 'var(--P)'], ['🍚', 'Carbohidratos', 33, 'var(--C)']]
       : [['🥦', 'Verduras', 50, 'var(--ok)'], ['🍗', 'Proteína', 25, 'var(--P)'], ['🍚', 'Carbohidratos', 25, 'var(--C)']];
@@ -307,13 +301,6 @@
     const stops = plate.map(([, , p, c]) => { const s = `${c} ${acc}% ${acc + p}%`; acc += p; return s; }).join(',');
     return `${hero('Comer afuera', 'Cómo seguir tu plan en cualquier lugar')}
       ${layout([
-      [`<section class="card t-amber">
-        <h3>🖐️ El método de la mano</h3>
-        <p class="sm mut">Tu mano es tu medida: siempre la llevás y es proporcional a tu cuerpo. Elegí una comida y mirá tus porciones:</p>
-        <div class="chips">${ms.map(m => `<button class="chip ${m === hm ? 'on' : ''}" data-a="hm" data-m="${m.i}">${esc(m.n)}</button>`).join('')}</div>
-        ${hm ? handsBlock(tgt(hm), hm.y) : ''}
-        <div class="hlegend">${NG.HANDS.map(x => `<div><span>${x.e}</span><p class="sm"><b>${x.n} = ${x.w}.</b> ${esc(x.d)}</p></div>`).join('')}</div>
-      </section>`, 'a'],
       [`<section class="card t-mint">
         <h3>🍽️ El plato ideal</h3>
         <div class="plate-w"><div class="plate" style="background:conic-gradient(${stops})"></div>
@@ -351,13 +338,12 @@
       </section>`, 'b'],
       [`<h3 class="sec">💡 Tus recomendaciones</h3>`, 'a'],
       [`<div class="recs">${(P.r || []).map(([e, t, x]) => `<section class="card rec t-sky"><span class="rec-e">${e}</span><div><b>${esc(t)}</b><p class="sm">${esc(x)}</p></div></section>`).join('')}</div>`, 'a'],
-      ])}
-      <p class="disc">Ante cualquier duda sobre suplementos o condiciones de salud, consultá con tu médico.</p>`;
+      ])}`;
   }
 
   /* PROGRESO */
   function chart(ws) {
-    if (ws.length < 2) return `<div class="empty sm">Registrá tu peso varios días para ver el gráfico 📉</div>`;
+    if (ws.length < 2) return `<div class="empty sm">Registrá tu peso unos días para ver el gráfico.</div>`;
     const pts = ws.slice(-45), W = 320, H = 140, pad = 22;
     const ys = pts.map(p => p.kg), mn = Math.min(...ys) - 0.4, mx = Math.max(...ys) + 0.4;
     const t0 = new Date(pts[0].d).getTime(), t1 = new Date(pts[pts.length - 1].d).getTime() || t0 + 1;
@@ -382,7 +368,7 @@
         <div class="row gap"><label class="fld grow"><span>Peso (kg)</span><input id="wkg" type="text" inputmode="decimal" autocomplete="off" value="${tw ? tw.kg : ''}" placeholder="Ej: 72,5"></label>
         <label class="fld grow"><span>Cintura (cm, opcional)</span><input id="wcin" type="text" inputmode="decimal" autocomplete="off" value="${tw && tw.cin ? tw.cin : ''}" placeholder="Ej: 84"></label></div>
         <button class="btn pri block" data-a="wsave">Guardar</button>
-        <p class="sm mut">En ayunas, después de ir al baño. Lo importante es el promedio de la semana.</p>
+        <p class="sm mut">En ayunas. Importa el promedio de la semana.</p>
       </section>`, 'b'],
       [`<section class="card stats t-lime">
         <div><small>Promedio 7 días</small><b>${wk.avg ? n1(wk.avg) + ' kg' : '—'}</b></div>
@@ -403,26 +389,31 @@
   /* ── Hojas ─────────────────────────────────────────────────────── */
   function sheetCheck(mid) {
     const m = meals().find(x => x.i === mid); if (!m) return;
-    U.open(`<h3>${(NG.MEAL_TYPES[m.y] || {}).e || ''} ${esc(m.n)}</h3><p class="mut sm">¿Qué comiste?</p>
-      <div class="stack">${m.o.map((o, i) => `<button class="btn ghost block left" data-a="mset" data-m="${m.i}" data-o="${i}">${o.y ? '🧭' : '✅'} Opción ${String.fromCharCode(65 + i)} · ${esc(o.n)}</button>`).join('')}
-      ${m.o.some(o => o.y) ? '' : `<button class="btn ghost block left" data-a="mset" data-m="${m.i}" data-o="-1">🧭 Comí afuera con el método de la mano</button>`}
-      ${freePerWeek() ? (freeLeft(st.day) ? `<button class="btn ghost block left" data-a="mset" data-m="${m.i}" data-o="-3">🍕 Comida libre planificada (${leftTxt(freeLeft(st.day))} esta semana)</button>` : '<p class="sm mut center">🍕 Ya usaste tu comida libre de esta semana</p>') : ''}
-      <button class="btn ghost block left" data-a="mset" data-m="${m.i}" data-o="-2">😅 Me salí del plan (¡pasa! seguimos)</button></div>`);
+    // Opciones como tarjetas cortas: letra, título (lo que va antes de «:»), detalle en una línea y calorías
+    const cur = peek(st.day).m[m.i], alt = (o, n, extra = '') => `<button class="chip ${cur === o ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${o}" ${extra}>${n}</button>`;
+    U.open(`<h3>${esc(m.n)}</h3><p class="mut sm">¿Qué comiste?</p>
+      <div class="pick">${m.o.map((o, i) => {
+        const [t, ...d] = o.n.split(/:\s*/), k = o.y ? m.t[0] : E.sum(items(o)).k;
+        return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}"><span class="pk-l">${String.fromCharCode(65 + i)}</span>
+          <span class="pk-t"><b>${esc(t)}</b>${d.length ? `<small>${esc(d.join(': '))}</small>` : ''}</span><span class="pk-k">${n0(k)}<small>kcal</small></span></button>`;
+      }).join('')}</div>
+      <div class="pk-alt">${m.o.some(o => o.y) ? '' : alt(-1, 'Comí afuera')}
+        ${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
+        ${alt(-2, 'No seguí el plan')}</div>`);
   }
   function sheetFree() {
     const n = freePerWeek(), left = freeLeft(st.day);
     U.open(`<h3>🍕 Tu comida libre</h3>
       <p>Tenés ${n === 1 ? '1 comida libre' : `${n} comidas libres`} por semana: <b>${left ? leftTxt(left) : 'ya la usaste'}</b> esta semana.</p>
       <ul class="clean">${NG.FREE_TIPS.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-      <p class="sm mut">Para usarla, tocá ✓ en la comida y elegí «Comida libre planificada». Cuenta como comida cumplida.</p>`);
+      <p class="sm mut">Marcala con ✓ en la comida que elijas. Cuenta como cumplida.</p>`);
   }
   function sheetSwap(fid, g) {
     const f = NG.food(fid); if (!f) return;
     const list = E.exchanges(fid, g, rules()).slice(0, 14), q = qty(f, g);
     U.open(`<h3>${f.e} ${esc(f.n)}</h3><p class="mut sm">${q.main}${q.sub ? ' · ' + q.sub : ''} — podés reemplazarlo por:</p>
       ${list.length ? `<div class="items">${list.map(x => { const ff = NG.food(x.f), qq = qty(ff, x.g); return `<div class="it static"><span class="it-e">${ff.e}</span><span class="it-n">${esc(ff.n)}<small>${n0(x.m.k)} kcal · P ${n0(x.m.p)} · C ${n0(x.m.c)} · G ${n0(x.m.f)}</small></span><span class="it-q"><b>${qq.main}</b>${qq.sub ? `<small>${qq.sub}</small>` : ''}</span></div>`; }).join('')}</div>`
-        : '<div class="empty sm">No hay equivalencias para este alimento.</div>'}
-      <p class="sm mut">Las equivalencias igualan el nutriente principal del grupo (proteína, carbohidratos o grasas).</p>`);
+        : '<div class="empty sm">No hay equivalencias para este alimento.</div>'}`);
   }
   function sheetShop() {
     const W = {};
@@ -433,7 +424,7 @@
     const groups = {};
     Object.entries(W).forEach(([id, g]) => { const f = NG.food(id); if (!f || f.g === 'libre') return; (groups[f.g] = groups[f.g] || []).push([f, g]); });
     const fmtW = (f, g) => (f.uf && f.ug ? `~${Math.ceil(g / f.ug)} ${f.u}${Math.ceil(g / f.ug) > 1 ? 's' : ''}` : g >= 1000 ? `~${n1(g / 1000)} ${f.ml ? 'L' : 'kg'}` : `~${Math.ceil(g / 50) * 50} ${f.ml ? 'ml' : 'g'}`);
-    const body = () => `<h3>🛒 Lista de compras semanal</h3><p class="sm mut">Estimada si rotás tus opciones durante 7 días. Ajustala a lo que realmente vas a cocinar.</p>
+    const body = () => `<h3>🛒 Lista de compras semanal</h3><p class="sm mut">Estimada para 7 días.</p>
       ${Object.keys(NG.GRUPOS).filter(k => groups[k]).map(k => `<h4>${NG.GRUPOS[k].e} ${NG.GRUPOS[k].n}</h4>${groups[k].sort((a, b) => b[1] - a[1]).map(([f, g]) => `<button class="shop ${st.data.shop[f.id] ? 'on' : ''}" data-a="shopchk" data-f="${f.id}"><span class="tck">${st.data.shop[f.id] ? ic('check', 14) : ''}</span>${f.e} ${esc(f.n)} <b>${fmtW(f, g)}</b></button>`).join('')}`).join('') || '<div class="empty sm">Tu plan no tiene alimentos para comprar.</div>'}
       <button class="btn ghost block sm" data-a="shopclear">Desmarcar todo</button>`;
     st.shopBody = body;
@@ -449,7 +440,7 @@
     const slider = (k, n, hint) => `<label class="fld"><span>${n}: <b id="ckv-${k}">3</b>/5${hint ? ` <small class="mut">(${hint})</small>` : ''}</span><input type="range" min="1" max="5" value="3" data-live="ck" data-c="${k}"></label>`;
     const chips = (c, opts) => `<div class="chips">${opts.map(([v, n]) => `<button class="chip" data-a="ckset" data-c="${c}" data-v="${v}">${n}</button>`).join('')}</div>`;
     U.open(`<h3>📤 Check-in semanal</h3>
-      <p class="sm mut">Uno solo por semana, con entrenamiento y alimentación. Te lleva 2 minutos.</p>
+      <p class="sm mut">Una vez por semana. Son 2 minutos.</p>
       <div class="ckres">
         <div><small>Peso promedio</small><b>${wk.avg ? n1(wk.avg) + ' kg' : 'sin datos'}</b></div>
         <div><small>Comidas cumplidas</small><b>${wk.adh == null ? '—' : wk.adh + '%'}</b></div>
@@ -459,13 +450,13 @@
       ${slider('fa', '😮‍💨 Fatiga', '1 fresco · 5 agotado')}${slider('es', '🧠 Estrés', '1 bajo · 5 alto')}
       <div class="fld"><span>🤕 ¿Sentiste alguna molestia o dolor?</span>${chips('mo', [[0, 'No'], [1, 'Sí']])}</div>
       <label class="fld" id="ck-md-wrap" style="display:none"><span>¿Dónde y en qué ejercicio?</span><input id="ck-md" placeholder="Ej: hombro derecho en press banca"></label>
-      <label class="fld"><span>💪 ¿Algún ejercicio te resultó muy fácil o muy difícil? <small class="mut">(opcional)</small></span><input id="ck-ej" placeholder="Ej: la sentadilla se sintió liviana"></label>
+      <label class="fld"><span>💪 ¿Algún ejercicio muy fácil o muy difícil? <small class="mut">(opcional)</small></span><input id="ck-ej" placeholder="Ej: la sentadilla se sintió liviana"></label>
       <h4>🍽️ Alimentación y bienestar</h4>
       ${slider('e', '⚡ Energía')}${slider('hu', '😋 Hambre', '1 poca · 5 mucha')}${slider('s', '😴 Descanso')}${slider('dg', '🌿 Digestión')}
-      ${pr.sex === 'F' ? `<div class="fld"><span>🩸 ¿Estuviste en la semana previa o durante la menstruación?</span>${chips('me', [[0, 'No'], [1, 'Sí']])}</div>` : ''}
+      ${pr.sex === 'F' ? `<div class="fld"><span>🩸 ¿Semana previa o de menstruación?</span>${chips('me', [[0, 'No'], [1, 'Sí']])}</div>` : ''}
       <label class="fld"><span>💬 ¿Algo más que quieras contarme?</span><textarea id="ck-no" rows="2" placeholder="Cómo te sentiste, qué te costó, dudas…"></textarea></label>
-      ${photoDue() ? `<div class="card tipc"><b>📸 Esta semana tocan tus fotos</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Cuando termines este check-in, subilas a tu carpeta de Drive, en «03 Fotos de Progreso».</p></div>` : ''}
-      ${!wk.avg ? '<p class="sm warnline">Tip: registrá tu peso en Progreso para que el check-in sea más útil.</p>' : ''}
+      ${photoDue() ? `<div class="card tipc"><b>📸 Esta semana tocan tus fotos</b><p class="sm">Frente, perfil y espalda. Después subilas a tu Drive, en «03 Fotos de Progreso».</p></div>` : ''}
+      ${!wk.avg ? '<p class="sm warnline">Registrá tu peso en Progreso para un mejor check-in.</p>' : ''}
       <div class="stack">${(PL().co || {}).w ? `<button class="btn wa block" data-a="ck-send">${ic('chat')} Enviar por WhatsApp</button>` : ''}
       <button class="btn ${(PL().co || {}).w ? 'ghost' : 'pri'} block" data-a="ck-copy">${ic('copy')} Copiar mensaje</button></div>`);
   }
@@ -511,13 +502,13 @@
       <label class="fld"><span>Apariencia</span></label>
       <div class="seg">${[['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Oscuro']].map(([k, n]) => `<button class="${th === k ? 'on' : ''}" data-a="theme" data-v="${k}">${n}</button>`).join('')}</div>
       <h4>📥 ¿Te mandaron un plan nuevo?</h4>
-      <p class="sm mut">Si tenés la app instalada, pegá acá el link nuevo. Tus registros se mantienen.</p>
+      <p class="sm mut">Pegá el link nuevo. Tus registros se mantienen.</p>
       <textarea id="s-code" rows="2" placeholder="Pegá el link del plan"></textarea>
       <button class="btn pri block" data-a="s-import">Actualizar plan</button>
       <h4>📲 Instalar en el celular</h4>
       <p class="sm"><b>Android (Chrome):</b> menú ⋮ → «Instalar app» o «Agregar a pantalla principal».<br><b>iPhone (Safari):</b> botón Compartir ⬆️ → «Agregar a inicio».</p>
       <h4>💾 Tus datos</h4>
-      <p class="sm mut">Tus registros se guardan solo en este dispositivo. Podés hacer una copia por las dudas.</p>
+      <p class="sm mut">Tus registros están solo en este celular. Hacé una copia de vez en cuando.</p>
       <div class="row gap wrapr"><button class="btn ghost sm" data-a="s-export">${ic('dl', 15)} Guardar copia</button><button class="btn ghost sm" data-a="s-restore">${ic('up', 15)} Restaurar copia</button><button class="btn ghost sm danger-t" data-a="s-reset">${ic('trash', 15)} Borrar todo</button></div>
       <p class="sm mut center">Plan versión ${PL().ver || 1} · ${esc((PL().co || {}).b || '')}</p>`);
   }
@@ -553,7 +544,6 @@
       case 'water': { const L = log(st.day); L.w = Math.max(0, Math.min(30, (L.w || 0) + +ds.d)); save(); if (+ds.d > 0 && L.w === glasses()) U.toast('💧 ¡Meta de agua cumplida!'); return render(); }
       case 'wset': { const L = log(st.day); L.w = +ds.n; save(); return render(); }
       case 'habit': { const L = log(S.today()); L.h = L.h || {}; L.h[ds.h] = !L.h[ds.h]; save(); return render(); }
-      case 'hm': st.hm = ds.m; return render();
       case 'place': st.place = st.place === +ds.i ? -1 : +ds.i; return render();
       case 'wsave': {
         const kg = parseFloat(String(document.getElementById('wkg').value).replace(',', '.'));

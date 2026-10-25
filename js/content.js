@@ -173,9 +173,9 @@
 
   // Texto guía para opciones "Comer afuera"
   NG.FLEX = {
-    dm: 'Cafetería: café con leche (o cortado) + tostado de jamón y queso, o tostadas con queso. Sumá una fruta si podés.\nKiosco o súper: yogur (ideal alto en proteína) + fruta + barrita o un puñado de frutos secos.\nEvitá medialunas y facturas como costumbre diaria.',
-    ac: 'Elegí una proteína a la plancha, al horno o grillada; sumá verduras o ensalada y una porción de carbohidrato del tamaño indicado.\nAderezos y salsas aparte. Para tomar: agua, soda o bebida zero.\nComedor: armá el plato con el método de la mano y no repitas.',
-    sn: 'Fruta + yogur, un puñado de frutos secos, una barrita proteica o un sándwich chico de jamón y queso.',
+    dm: 'Café con leche + tostado de jamón y queso.\nO yogur proteico + fruta + barrita.\nMedialunas, solo de vez en cuando.',
+    ac: 'Proteína a la plancha o al horno + ensalada + una porción chica de papa, arroz o pan.\nSalsas aparte. Agua, soda o bebida zero.',
+    sn: 'Fruta y yogur, frutos secos, barrita proteica o un sándwich chico.',
   };
 
   // Opciones del formulario y del perfil
@@ -239,12 +239,6 @@
   ];
 
   /* Guía para comer afuera — contenido para el alumno */
-  NG.HANDS = [
-    { k: 'palm', e: '🖐️', n: 'Palma', w: 'Proteína', c: 'var(--P)', d: 'El tamaño y grosor de tu palma (sin los dedos) ≈ 20–30 g de proteína: carne, pollo, pescado, 2–3 huevos, tofu.' },
-    { k: 'fist', e: '✊', n: 'Puño', w: 'Verduras', c: 'var(--ok)', d: 'Un puño ≈ 1 taza de verduras crudas o cocidas. Cuantas más, mejor.' },
-    { k: 'cup', e: '🤲', n: 'Mano ahuecada', w: 'Carbohidratos', c: 'var(--C)', d: 'Lo que entra en tu mano ahuecada ≈ 20–30 g de carbohidratos: arroz, fideos, papa, legumbres, fruta.' },
-    { k: 'thumb', e: '👍', n: 'Pulgar', w: 'Grasas', c: 'var(--F)', d: 'El tamaño de tu pulgar ≈ 7–12 g de grasa: aceite, palta, frutos secos, queso.' },
-  ];
 
   NG.PLACES = [
     {
@@ -324,7 +318,7 @@
     },
     {
       e: '🚀', n: 'Autonomía', w: 'desde la semana 5', goal: 85,
-      focus: 'Resolver cualquier situación (comer afuera, eventos, viajes) con el método de la mano y las equivalencias.',
+      focus: 'Resolver cualquier situación (comer afuera, eventos, viajes) con las equivalencias y la guía de comer afuera.',
       habits: [['planif', '🗓️', 'Planifiqué mis comidas del día'], ['mov', '🚶', 'Me moví / hice mis pasos'], ['sueno', '😴', 'Dormí 7 horas o más']],
     },
   ];

@@ -47,7 +47,7 @@
     Object.assign(cl.plan, { version: 1, sentVersion: 1, dirty: false, sentAt: Date.now() - 21 * 864e5, phases: true, start: d(21), free: 1 });
     cl.checkins = [
       { date: d(14), avg: 81.9, prev: 82.4, adh: 78, done: 22, tot: 28, lib: 1, w: 6.1, cin: 90, e: 3, hu: 4, s: 3, dg: 4, tr: 3, tp: 4, fa: 3, es: 3, mo: 0, no: 'Me costó el almuerzo en la calle los primeros días.' },
-      { date: d(7), avg: 81.4, prev: 81.9, adh: 86, done: 24, tot: 28, lib: 1, w: 7.4, cin: 89, e: 4, hu: 3, s: 3, dg: 4, tr: 4, tp: 4, fa: 3, es: 2, mo: 0, ej: 'La sentadilla se sintió liviana', no: 'Con el método de la mano me resulta más fácil comer afuera.' },
+      { date: d(7), avg: 81.4, prev: 81.9, adh: 86, done: 24, tot: 28, lib: 1, w: 7.4, cin: 89, e: 4, hu: 3, s: 3, dg: 4, tr: 4, tp: 4, fa: 3, es: 2, mo: 0, ej: 'La sentadilla se sintió liviana', no: 'Ya me organizo mejor para comer afuera.' },
       { date: d(0), avg: 81.0, prev: 81.4, adh: 89, done: 25, tot: 28, lib: 1, w: 7.9, cin: 88.5, e: 4, hu: 3, s: 4, dg: 5, tr: 4, tp: 4, fa: 4, es: 3, mo: 1, md: 'Hombro derecho en press banca', no: 'Bien! Usé la comida libre en un asado y elegí colita de cuadril con ensalada.' },
     ];
     D.clients[cl.id] = cl; save();
@@ -493,7 +493,7 @@
   }
   function mealCard(cl, m, mi) {
     const P = cl.plan, oi = Math.min(cs.optSel[m.id] || 0, Math.max(0, m.options.length - 1)), o = m.options[oi];
-    const pb = `plan.meals.${mi}`, h = E.hands(m.target, m.type);
+    const pb = `plan.meals.${mi}`;
     return `<section class="card meal-e">
       <div class="mhead">
         <select data-b="${pb}.type" data-k="${pb}.type" class="mtype">${Object.entries(NG.MEAL_TYPES).map(([k, t]) => `<option value="${k}" ${m.type === k ? 'selected' : ''}>${t.e}</option>`).join('')}</select>
@@ -504,8 +504,7 @@
         <select data-b="${pb}.tag" data-k="${pb}.tag">${[['normal', 'Comida normal'], ['pre', '⚡ Pre-entreno'], ['post', '💪 Post-entreno']].map(([k, n]) => `<option value="${k}" ${m.tag === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
         <span class="row gap-s"><button class="ib sm" data-a="mup" data-mi="${mi}" ${mi ? '' : 'disabled'} aria-label="Subir">${ic('arrU', 15)}</button><button class="ib sm" data-a="mdown" data-mi="${mi}" ${mi < P.meals.length - 1 ? '' : 'disabled'} aria-label="Bajar">${ic('arrD', 15)}</button><button class="ib sm" data-a="mdel" data-mi="${mi}" aria-label="Eliminar comida">${ic('trash', 15)}</button></span>
       </div>
-      <div class="row between wrapr"><div>${pills(m.target, { sm: true })}</div>
-        <span class="sm mut">🖐️ ${U.frac(h.palm)} · ✊ ${h.fist} · 🤲 ${U.frac(h.cup)} · 👍 ${U.frac(h.thumb)}</span></div>
+      <div class="row between wrapr"><div>${pills(m.target, { sm: true })}</div></div>
       <div class="otabs">${m.options.map((x, i) => `<button class="${i === oi ? 'on' : ''}" data-a="osel" data-m="${m.id}" data-i="${i}">${x.type === 'flex' ? '🧭' : String.fromCharCode(65 + i)} <span>${esc(x.name.length > 26 ? x.name.slice(0, 24) + '…' : x.name)}</span></button>`).join('')}
         <button class="add" data-a="oadd" data-mi="${mi}">${ic('plus', 14)} Opción</button></div>
       ${o ? optEditor(cl, m, mi, o, oi) : '<div class="empty sm">Sin opciones. Agregá una.</div>'}
@@ -517,7 +516,7 @@
     const head = `<div class="ohead"><input data-b="${ob}.name" data-k="${ob}.name" value="${esc(o.name)}" class="oname-i">
       <span class="row gap-s">${o.type !== 'flex' ? `<button class="btn ghost sm" data-a="ofit" ${A} title="Ajustar cantidades al objetivo">⚖️ Ajustar</button><button class="btn ghost sm" data-a="oauto" ${A} title="Reemplazar por otra opción automática">${ic('wand', 14)} Otra</button>` : ''}
       <button class="ib sm" data-a="odup" ${A} title="Duplicar">${ic('copy', 15)}</button><button class="ib sm" data-a="odel" ${A} title="Eliminar opción">${ic('trash', 15)}</button></span></div>`;
-    if (o.type === 'flex') return `<div class="oed">${head}<p class="sm mut">Opción flexible: el alumno arma el plato con el método de la mano según el objetivo de esta comida.</p>
+    if (o.type === 'flex') return `<div class="oed">${head}<p class="sm mut">Opción flexible: el alumno elige qué comer afuera respetando las calorías y la proteína de esta comida.</p>
       <textarea data-b="${ob}.text" data-k="${ob}.text" rows="4">${esc(o.text || '')}</textarea></div>`;
     const t = E.sum(o.items);
     return `<div class="oed">${head}
@@ -838,7 +837,7 @@
         U.open(`<h3>Nueva opción para ${esc(m.name)}</h3><div class="stack">
           <button class="btn ghost block left" data-a="oaddk" data-k="auto" data-mi="${ds.mi}">${ic('wand')} Automática (según su perfil)</button>
           <button class="btn ghost block left" data-a="oaddk" data-k="empty" data-mi="${ds.mi}">${ic('plus')} Vacía (la armo yo)</button>
-          <button class="btn ghost block left" data-a="oaddk" data-k="flex" data-mi="${ds.mi}">🧭 Comer afuera (método de la mano)</button></div>`, { center: true });
+          <button class="btn ghost block left" data-a="oaddk" data-k="flex" data-mi="${ds.mi}">🧭 Comer afuera</button></div>`, { center: true });
         return;
       }
       case 'oaddk': {

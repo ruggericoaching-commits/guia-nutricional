@@ -243,13 +243,6 @@ details.out { margin-top: 12px; background: var(--card2); border-radius: var(--r
 details.out summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 summary { transition: opacity .2s; }
 summary:hover { opacity: .75; }
-.hands { display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 8px; margin: 12px 0; }
-.hand { background: var(--card2); border-radius: var(--r2); padding: 12px 6px; text-align: center; }
-.hand .he { font-size: 26px; display: block; filter: saturate(.85); opacity: .75; }
-.hand b { font-size: 24px; font-weight: 700; letter-spacing: -.03em; display: block; font-variant-numeric: tabular-nums; }
-.hand small { color: var(--mut); font-size: 11px; line-height: 1.25; display: block; }
-.hlegend > div { display: flex; gap: 12px; align-items: flex-start; margin: 8px 0; }
-.hlegend span { font-size: 20px; filter: saturate(.85); opacity: .75; }
 .plate-w { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center; }
 .plate { width: 128px; height: 128px; border-radius: 50%; border: 9px solid var(--card2); box-shadow: var(--sh); }
 .plate-l > div { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 14px; }
@@ -452,6 +445,38 @@ summary:hover { opacity: .75; }
   .kc b { font-size: 44px; }
 }
 
+/* ── «¿Qué comiste?»: opciones como tarjetas cortas ───────────── */
+.pick { display: grid; gap: 8px; margin: 14px 0 12px; }
+.pk { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border: 0; border-radius: 16px; background: var(--card2); text-align: left; cursor: pointer; transition: background-color .25s, box-shadow .3s var(--ease), transform .15s var(--ease); }
+.pk:hover { background: var(--card3); }
+.pk:active { transform: scale(.985); }
+.pk.on { background: color-mix(in srgb, var(--acc) 12%, var(--card2)); box-shadow: inset 0 0 0 1.5px var(--acc-ink); }
+.pk-l { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: 15px; background: var(--card3); color: var(--tx); transition: background-color .25s; }
+.pk.on .pk-l { background: var(--acc); color: var(--onacc); }
+.pk-t { min-width: 0; }
+.pk-t b { display: block; font-size: 15px; font-weight: 600; }
+.pk-t small { display: block; font-size: 12.5px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-k { text-align: right; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+.pk-k small { display: block; font-size: 9.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--mut); }
+.pk-alt { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; box-shadow: 0 -1px 0 var(--line); }
+.pk-alt .chip:disabled { opacity: .45; cursor: default; }
+
+/* ── Formulario: comidas, horario y lugar en una fila ─────────── */
+.mrows { display: grid; gap: 8px; margin: 8px 0 16px; }
+.mrow2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n t" "s s"; gap: 10px 12px; align-items: center; padding: 14px; border-radius: 16px; background: var(--card); box-shadow: var(--sh); }
+.mrow2 > b { grid-area: n; font-size: 15px; }
+.mrow2 .seg { grid-area: s; margin: 0; }
+.mrow2 .seg button.on { background: var(--acc); color: var(--onacc); }
+.tstep { grid-area: t; display: inline-flex; align-items: center; gap: 2px; background: var(--card2); border-radius: 12px; padding: 3px; }
+.tstep span { min-width: 58px; text-align: center; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+.tstep button { width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; font-size: 18px; cursor: pointer; transition: background-color .2s, transform .12s var(--ease); }
+.tstep button:hover { background: var(--card3); }
+.tstep button:active { transform: scale(.9); }
+@media (min-width: 560px) {
+  .mrow2 { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "n t s"; }
+  .mrow2 .seg { min-width: 250px; }
+}
+
 /* ── Tonos: cada sección con su color, sutil sobre el grafito ───── */
 .t-lime { --tone: var(--acc); --tone-i: var(--acc-ink); }
 .t-sky { --tone: var(--sky); --tone-i: var(--sky-i); }
@@ -491,8 +516,8 @@ summary:hover { opacity: .75; }
 .fsec h3 { font-size: 18px; margin: 2px 0 6px; }
 .fsec header p { margin: 0; line-height: 1.45; }
 .fbody > :first-child { margin-top: 0; }
-.fbody .chip.on { background: var(--tone); color: var(--onacc); }
-.fbody input:focus, .fbody select:focus, .fbody textarea:focus { box-shadow: 0 0 0 1px var(--tone-i), 0 0 0 5px color-mix(in srgb, var(--tone) 20%, transparent); }
+.fsec .fbody .chip.on { background: var(--tone); color: var(--onacc); }
+.fsec .fbody input:focus, .fsec .fbody select:focus, .fsec .fbody textarea:focus { box-shadow: 0 0 0 1px var(--tone-i), 0 0 0 5px color-mix(in srgb, var(--tone) 20%, transparent); }
 @media (max-width: 900px) {
   .fsec { grid-template-columns: 1fr; gap: 14px; padding: 22px 18px; }
   .fsec header { position: static; }
@@ -684,3 +709,8 @@ summary:hover { opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Portada del formulario: corta y con aire */
+.intro { padding: 12vh 0 4vh; }
+.intro h1 { font-size: 40px; margin: 10px 0 8px; }
+.intro p { font-size: 16px; margin: 0; }
