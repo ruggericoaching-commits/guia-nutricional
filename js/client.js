@@ -97,6 +97,14 @@
     return { plan, logs, weights, checks: [{ d: S.addDays(today, -14) }, { d: S.addDays(today, -7) }], shop: {}, ui: {} };
   }
 
+  // En PC las tarjetas se reparten en una columna principal (a) y una lateral (b); en el celular quedan en orden
+  const WIDE = matchMedia('(min-width: 1100px)');
+  WIDE.addEventListener('change', () => { if (st && document.querySelector('.cl')) render(); });
+  function layout(parts, stick) {
+    const col = k => parts.filter(p => p[1] === k).map(p => p[0]).join('');
+    return WIDE.matches ? `<div class="dcols${stick ? ' stick' : ''}"><div class="dc-a">${col('a')}</div><div class="dc-b">${col('b')}</div></div>` : parts.map(p => p[0]).join('');
+  }
+
   /* ── Montaje ───────────────────────────────────────────────────── */
   function mount(o = {}) {
     root = document.getElementById('app');
@@ -164,7 +172,7 @@
     const v = { hoy: vHoy, plan: vPlan, afuera: vAfuera, habitos: vHabitos, progreso: vProgreso }[st.tab] || vHoy;
     U.paint(root, `${st.preview ? `<div class="pvbar">👀 Vista previa del alumno${st.demo ? ' · datos simulados' : ''} <button class="btn sm" data-a="exitpv">${ic('chevL', 14)} Volver al panel</button></div>` : ''}
       <div class="wrap narrow cl">${v()}</div>
-      <nav class="navb">${TABS.map(([k, e, n]) => `<button class="${st.tab === k ? 'on' : ''}" data-a="tab" data-t="${k}"><span>${e}</span>${n}</button>`).join('')}</nav>`);
+      <nav class="navb"><span class="nb-brand">${esc((PL().co || {}).b || (PL().co || {}).n || 'Tu guía')}</span>${TABS.map(([k, e, n]) => `<button class="${st.tab === k ? 'on' : ''}" data-a="tab" data-t="${k}"><span>${e}</span>${n}</button>`).join('')}</nav>`);
   }
 
   function hero(title, sub, right = '') {
@@ -188,10 +196,11 @@
       <div class="daynav"><button class="ib" data-a="day" data-d="-1">${ic('chevL')}</button>
         <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
-      ${ph && d === today ? phaseCard(ph) : ''}
-      ${d === today && photoDue() ? `<section class="card tipc"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Subilas a tu carpeta de Drive, en «03 Fotos de Progreso» (la misma carpeta de tus videos).</p></section>` : ''}
-      ${isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>. Así la abrís como una app y tus datos quedan guardados.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : ''}
-      <section class="card">
+      ${layout([
+        [ph && d === today ? phaseCard(ph) : '', 'b'],
+        [d === today && photoDue() ? `<section class="card tipc"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Subilas a tu carpeta de Drive, en «03 Fotos de Progreso» (la misma carpeta de tus videos).</p></section>` : '', 'b'],
+        [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>. Así la abrís como una app y tus datos quedan guardados.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : '', 'b'],
+      [`<section class="card">
         <div class="row between"><h3>Tu día</h3><span class="mut sm">objetivo ${n0(T.k)} kcal</span></div>
         <div class="kc"><b>${n0(tt.k)}</b><span>/ ${n0(T.k)} kcal (estimado según lo que marcaste)</span></div>
         ${bar(tt.k, T.k, 'var(--acc)')}
@@ -200,8 +209,8 @@
           <div><span class="dot c"></span>Carbos<b>${n0(tt.c)} / ${n0(T.c)} g</b>${bar(tt.c, T.c, 'var(--C)')}</div>
           <div><span class="dot f"></span>Grasas<b>${n0(tt.f)} / ${n0(T.f)} g</b>${bar(tt.f, T.f, 'var(--F)')}</div>
         </div>
-      </section>
-      <section class="card">
+      </section>`, 'a'],
+      [`<section class="card">
         <div class="row between"><h3>Comidas</h3><span class="mut sm">tocá ✓ cuando la hagas</span></div>
         <div class="tl">${ms.map(m => {
           const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
@@ -213,14 +222,15 @@
             ${ic('chevR', 16)}</div>`;
         }).join('')}</div>
         ${freePerWeek() ? `<button class="freeline" data-a="free">🍕 Comida libre planificada <b>${fl ? leftTxt(fl) + ' esta semana' : 'ya la usaste esta semana'}</b></button>` : ''}
-      </section>
-      <section class="card">
+      </section>`, 'a'],
+      [`<section class="card">
         <div class="row between"><h3>💧 Agua</h3><span class="mut sm">${n1(w * 0.25)} / ${n1(g * 0.25)} L</span></div>
         <div class="glasses">${Array.from({ length: g }, (_, i) => `<button class="gl ${i < w ? 'on' : ''}" data-a="wset" data-n="${i < w && i === w - 1 ? i : i + 1}" aria-label="Vaso ${i + 1}"></button>`).join('')}</div>
         <div class="row center gap"><button class="btn ghost sm" data-a="water" data-d="-1">− vaso</button><button class="btn pri sm" data-a="water" data-d="1">+ vaso</button></div>
-      </section>
-      ${tip ? `<section class="card tip"><div class="tip-e">${tip[0]}</div><div><b>${esc(tip[1])}</b><p class="sm">${esc(tip[2])}</p></div></section>` : ''}
-      ${P.ms ? `<section class="card coachmsg"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : ''}
+      </section>`, 'b'],
+        [tip ? `<section class="card tip"><div class="tip-e">${tip[0]}</div><div><b>${esc(tip[1])}</b><p class="sm">${esc(tip[2])}</p></div></section>` : '', 'b'],
+        [P.ms ? `<section class="card coachmsg"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
+      ])}
       <p class="disc">Esta guía es orientativa y no reemplaza la consulta médica. Ante cualquier condición de salud, consultá con tu médico.</p>`;
   }
 
@@ -253,18 +263,19 @@
   function vPlan() {
     const P = PL(), T = P.t;
     return `${hero('Tu plan', `${n0(T.k)} kcal por día · ${meals().length} comidas`)}
-      <section class="card targets">
+      ${layout([
+      [`<section class="card targets">
         <div class="tg"><b>${n0(T.p)} g</b><span><i class="dot p"></i>Proteína</span></div>
         <div class="tg"><b>${n0(T.c)} g</b><span><i class="dot c"></i>Carbohidratos</span></div>
         <div class="tg"><b>${n0(T.f)} g</b><span><i class="dot f"></i>Grasas</span></div>
         <div class="tg"><b>${n0(T.fi)} g</b><span>🌾 Fibra</span></div>
         <div class="tg"><b>${n1(T.w / 1000)} L</b><span>💧 Agua</span></div>
-      </section>
-      <p class="sm mut center">Cada comida tiene opciones equivalentes: elegí la que quieras. Tocá un alimento para ver con qué reemplazarlo.</p>
-      <details class="card measures"><summary>📏 ¿No tenés balanza? Medidas caseras</summary>
+      </section>`, 'b'],
+      [`<p class="sm mut center">Cada comida tiene opciones equivalentes: elegí la que quieras. Tocá un alimento para ver con qué reemplazarlo.</p>`, 'b'],
+      [`<details class="card measures"><summary>📏 ¿No tenés balanza? Medidas caseras</summary>
         <p class="sm mut">No hace falta pesar todo. Las primeras semanas usá estas medidas y después ya lo vas a calcular a ojo.</p>
-        <div class="mlist">${NG.MEASURES.map(([e, t, x]) => `<div><span>${e}</span><p class="sm"><b>${esc(t)}:</b> ${esc(x)}</p></div>`).join('')}</div></details>
-      ${meals().map(m => {
+        <div class="mlist">${NG.MEASURES.map(([e, t, x]) => `<div><span>${e}</span><p class="sm"><b>${esc(t)}:</b> ${esc(x)}</p></div>`).join('')}</div></details>`, 'b'],
+      [meals().map(m => {
         const open = openId() === m.i;
         const sel = Math.min(st.sel[m.i] ?? Math.max(0, peek(S.today()).m[m.i] ?? 0), m.o.length - 1);
         const o = m.o[sel];
@@ -280,8 +291,9 @@
             <details class="out"><summary>🧭 ¿Comés afuera? Armá tu plato con la mano</summary>${handsBlock(tgt(m), m.y)}<p class="sm pre">${esc(NG.FLEX[m.y === 'almuerzo' || m.y === 'cena' ? 'ac' : m.y === 'colacion' ? 'sn' : 'dm'])}</p></details>
           </div>` : ''}
         </section>`;
-      }).join('')}
-      <button class="btn ghost block" data-a="shop">🛒 Ver lista de compras de la semana</button>`;
+      }).join(''), 'a'],
+      [`<button class="btn ghost block" data-a="shop">🛒 Ver lista de compras de la semana</button>`, 'b'],
+      ], true)}`;
   }
 
   /* AFUERA */
@@ -293,26 +305,28 @@
     let acc = 0;
     const stops = plate.map(([, , p, c]) => { const s = `${c} ${acc}% ${acc + p}%`; acc += p; return s; }).join(',');
     return `${hero('Comer afuera', 'Cómo seguir tu plan en cualquier lugar')}
-      <section class="card">
+      ${layout([
+      [`<section class="card">
         <h3>🖐️ El método de la mano</h3>
         <p class="sm mut">Tu mano es tu medida: siempre la llevás y es proporcional a tu cuerpo. Elegí una comida y mirá tus porciones:</p>
         <div class="chips">${ms.map(m => `<button class="chip ${m === hm ? 'on' : ''}" data-a="hm" data-m="${m.i}">${esc(m.n)}</button>`).join('')}</div>
         ${hm ? handsBlock(tgt(hm), hm.y) : ''}
         <div class="hlegend">${NG.HANDS.map(x => `<div><span>${x.e}</span><p class="sm"><b>${x.n} = ${x.w}.</b> ${esc(x.d)}</p></div>`).join('')}</div>
-      </section>
-      <section class="card">
+      </section>`, 'a'],
+      [`<section class="card">
         <h3>🍽️ El plato ideal</h3>
         <div class="plate-w"><div class="plate" style="background:conic-gradient(${stops})"></div>
           <div class="plate-l">${plate.map(([e, n, p, c]) => `<div><i style="background:${c}"></i>${e} ${n} <b>${p === 34 || p === 33 ? '⅓' : p === 50 ? '½' : '¼'}</b></div>`).join('')}<div><i style="background:var(--F)"></i>🫒 + 1 porción de grasa saludable</div></div></div>
-      </section>
-      <h3 class="sec">📍 Según dónde estés</h3>
-      ${NG.PLACES.map((p, i) => `<section class="card acc ${st.place === i ? 'open' : ''}">
+      </section>`, 'b'],
+      [`<h3 class="sec">📍 Según dónde estés</h3>`, 'a'],
+      [NG.PLACES.map((p, i) => `<section class="card acc ${st.place === i ? 'open' : ''}">
         <button class="acc-h" data-a="place" data-i="${i}"><span>${p.e}</span><b>${esc(p.t)}</b>${ic(st.place === i ? 'chevU' : 'chevD', 18)}</button>
         ${st.place === i ? `<div class="acc-b"><div class="good"><b>✅ Mejores elecciones</b><ul>${p.best.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
           <div class="mod"><b>⚠️ Con moderación</b><ul>${p.mod.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-          ${p.tip ? `<p class="sm tipline">💡 ${esc(p.tip)}</p>` : ''}</div>` : ''}</section>`).join('')}
-      <section class="card"><h3>🏷️ Cómo leer etiquetas</h3><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
-      <section class="card"><h3>🍷 Alcohol</h3><ul class="clean">${NG.ALCOHOL_TIPS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`;
+          ${p.tip ? `<p class="sm tipline">💡 ${esc(p.tip)}</p>` : ''}</div>` : ''}</section>`).join(''), 'a'],
+      [`<section class="card"><h3>🏷️ Cómo leer etiquetas</h3><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
+      [`<section class="card"><h3>🍷 Alcohol</h3><ul class="clean">${NG.ALCOHOL_TIPS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
+      ])}`;
   }
 
   /* HÁBITOS */
@@ -327,14 +341,16 @@
   function vHabitos() {
     const P = PL(), L = peek(S.today()), ph = phase();
     return `${hero('Hábitos', ph ? `Fase ${ph.idx + 1}: ${ph.ph.n}` : 'Lo que más impacto tiene en tus resultados')}
-      ${ph ? phaseCard(ph, true) : ''}
-      ${P.ms ? `<section class="card coachmsg"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : ''}
-      <section class="card"><h3>✅ Hoy</h3>
+      ${layout([
+        [ph ? phaseCard(ph, true) : '', 'a'],
+        [P.ms ? `<section class="card coachmsg"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
+      [`<section class="card"><h3>✅ Hoy</h3>
         ${habitList().map(([k, e, n]) => `<button class="hab ${L.h && L.h[k] ? 'on' : ''}" data-a="habit" data-h="${k}"><span class="tck">${L.h && L.h[k] ? ic('check', 16) : ''}</span>${e} ${n}</button>`).join('')}
         <button class="hab ${(L.w || 0) >= glasses() ? 'on' : ''}" data-a="tab" data-t="hoy"><span class="tck">${(L.w || 0) >= glasses() ? ic('check', 16) : ''}</span>💧 Tomé mi agua (${L.w || 0}/${glasses()} vasos)</button>
-      </section>
-      <h3 class="sec">💡 Tus recomendaciones</h3>
-      ${(P.r || []).map(([e, t, x]) => `<section class="card rec"><span class="rec-e">${e}</span><div><b>${esc(t)}</b><p class="sm">${esc(x)}</p></div></section>`).join('')}
+      </section>`, 'b'],
+      [`<h3 class="sec">💡 Tus recomendaciones</h3>`, 'a'],
+      [`<div class="recs">${(P.r || []).map(([e, t, x]) => `<section class="card rec"><span class="rec-e">${e}</span><div><b>${esc(t)}</b><p class="sm">${esc(x)}</p></div></section>`).join('')}</div>`, 'a'],
+      ])}
       <p class="disc">Ante cualquier duda sobre suplementos o condiciones de salud, consultá con tu médico.</p>`;
   }
 
@@ -359,26 +375,28 @@
     const diff = wk.avg && wk.prev ? wk.avg - wk.prev : null;
     const cells = Array.from({ length: 28 }, (_, i) => S.addDays(today, i - 27));
     return `${hero('Tu progreso', 'Lo que se mide, se mejora')}
-      <section class="card">
+      ${layout([
+      [`<section class="card">
         <h3>⚖️ Registrar peso de hoy</h3>
         <div class="row gap"><label class="fld grow"><span>Peso (kg)</span><input id="wkg" type="text" inputmode="decimal" autocomplete="off" value="${tw ? tw.kg : ''}" placeholder="Ej: 72,5"></label>
         <label class="fld grow"><span>Cintura (cm, opcional)</span><input id="wcin" type="text" inputmode="decimal" autocomplete="off" value="${tw && tw.cin ? tw.cin : ''}" placeholder="Ej: 84"></label></div>
         <button class="btn pri block" data-a="wsave">Guardar</button>
         <p class="sm mut">En ayunas, después de ir al baño. Lo importante es el promedio de la semana.</p>
-      </section>
-      <section class="card stats">
+      </section>`, 'b'],
+      [`<section class="card stats">
         <div><small>Promedio 7 días</small><b>${wk.avg ? n1(wk.avg) + ' kg' : '—'}</b></div>
         <div><small>vs semana anterior</small><b class="${diff == null ? '' : diff < 0 ? 'down' : 'up'}">${diff == null ? '—' : (diff > 0 ? '+' : '') + n1(diff) + ' kg'}</b></div>
         <div><small>Adherencia 7 días</small><b>${wk.adh == null ? '—' : wk.adh + '%'}</b></div>
-      </section>
-      <section class="card"><h3>📉 Evolución</h3>${chart(ws)}</section>
-      <section class="card"><h3>🗓️ Últimas 4 semanas</h3>
+      </section>`, 'a'],
+      [`<section class="card"><h3>📉 Evolución</h3>${chart(ws)}</section>`, 'a'],
+      [`<section class="card"><h3>🗓️ Últimas 4 semanas</h3>
         <div class="heat">${cells.map(d => { const n = meals().length, dn = st.data.logs[d] && Object.keys(st.data.logs[d].m || {}).length ? doneCount(d) / n : -1; return `<i title="${fdate(d)}" class="${dn < 0 ? '' : dn >= 0.9 ? 'l4' : dn >= 0.6 ? 'l3' : dn >= 0.3 ? 'l2' : 'l1'}${d === today ? ' today' : ''}"></i>`; }).join('')}</div>
         <div class="row between sm mut"><span>Menos</span><span class="heat-k"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span><span>Más</span></div>
-      </section>
-      <button class="btn pri block big" data-a="checkin">📤 Enviar check-in semanal a ${esc((PL().co || {}).n || 'tu entrenador')}</button>
-      ${st.data.checks.length ? `<p class="sm mut center">Último check-in enviado: ${fdate(st.data.checks[st.data.checks.length - 1].d)}</p>` : ''}
-      ${ws.length ? `<section class="card"><h3>Registros</h3><div class="wlist">${ws.slice(-10).reverse().map(w => `<div class="row between"><span>${fdate(w.d)}</span><span><b>${n1(w.kg)} kg</b>${w.cin ? ` · ${n1(w.cin)} cm` : ''} <button class="ib sm" data-a="wdel" data-d="${w.d}" aria-label="Borrar">${ic('x', 14)}</button></span></div>`).join('')}</div></section>` : ''}`;
+      </section>`, 'b'],
+      [`<button class="btn pri block big" data-a="checkin">📤 Enviar check-in semanal a ${esc((PL().co || {}).n || 'tu entrenador')}</button>`, 'b'],
+        [st.data.checks.length ? `<p class="sm mut center">Último check-in enviado: ${fdate(st.data.checks[st.data.checks.length - 1].d)}</p>` : '', 'b'],
+        [ws.length ? `<section class="card"><h3>Registros</h3><div class="wlist">${ws.slice(-10).reverse().map(w => `<div class="row between"><span>${fdate(w.d)}</span><span><b>${n1(w.kg)} kg</b>${w.cin ? ` · ${n1(w.cin)} cm` : ''} <button class="ib sm" data-a="wdel" data-d="${w.d}" aria-label="Borrar">${ic('x', 14)}</button></span></div>`).join('')}</div></section>` : '', 'b'],
+      ])}`;
   }
 
   /* ── Hojas ─────────────────────────────────────────────────────── */

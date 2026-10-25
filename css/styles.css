@@ -590,6 +590,34 @@ summary:hover { opacity: .75; }
   .cmain .ctabs { margin-top: 0; }
 }
 
+/* ── App del alumno en PC: navegación al costado y dos columnas ── */
+.nb-brand { display: none; }
+@media (min-width: 1100px) {
+  .wrap.narrow.cl { max-width: 1240px; margin: 0 0 0 max(248px, calc(248px + (100vw - 248px - 1240px) / 2)); padding: 30px 44px 64px; }
+  .navb { top: 0; bottom: 0; right: auto; width: 232px; flex-direction: column; justify-content: flex-start; gap: 2px; padding: 30px 16px; background: color-mix(in srgb, var(--card) 55%, var(--bg)); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 1px 0 0 var(--line); }
+  .pvbar ~ .navb { top: 50px; }
+  .nb-brand { display: block; padding: 0 14px 22px; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mut); }
+  .navb button { flex: 0 0 auto; max-width: none; text-align: left; padding: 13px 14px 13px 32px; border-radius: 12px; font-size: 12px; transition: color .25s, background-color .25s; }
+  .navb button::before { top: 50%; left: 15px; margin: -3px 0 0; }
+  .navb button:hover { background: var(--card2); color: var(--tx); }
+  .navb button.on { background: var(--card); box-shadow: var(--sh); }
+  .dcols { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .dcols.stick .dc-b { position: sticky; top: 24px; }
+  .dc-a > :first-child, .dc-b > :first-child { margin-top: 0; }
+  .cl .hero { padding: 30px 34px 32px; border-radius: 28px; }
+  .cl .hero h1 { font-size: 42px; }
+  .cl .daynav { justify-content: flex-start; margin: 4px 0 14px; }
+  .recs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .recs .card { margin: 0 0 14px; }
+  .dc-b .targets { grid-template-columns: repeat(3, 1fr); }
+  .cl .disc { text-align: left; margin-left: 4px; }
+  #toast { bottom: 32px; }
+  .enter .dc-a > *, .enter .dc-b > * { animation: rise .6s var(--ease) both; }
+  .enter .dc-b > * { animation-delay: .1s; }
+  .enter .dc-a > :nth-child(2), .enter .dc-b > :nth-child(2) { animation-delay: .16s; }
+  .enter .dc-a > :nth-child(n+3), .enter .dc-b > :nth-child(n+3) { animation-delay: .22s; }
+}
+
 /* ── Movimiento: entrada suave al cambiar de pantalla ──────────── */
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } }
 @keyframes grow { from { width: 0; } }
