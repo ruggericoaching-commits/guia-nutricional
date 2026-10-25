@@ -194,7 +194,7 @@
     if (!n || days < 7) return '';
     return `<div class="banner warn"><span>💾 ${D.lastBackup ? `Tu último respaldo fue hace ${Math.floor(days)} días.` : 'Todavía no hiciste ningún respaldo.'} Descargalo y guardalo en Drive → 01_COACHING → 04_RESPALDOS APP.</span><button class="btn sm pri" data-a="backup">Respaldar ahora</button></div>`;
   }
-  const driveBtn = (url, label = '📁 Drive') => (url ? `<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : '');
+  const driveBtn = (url, label = '📁 Drive') => (/^https:\/\//i.test(url || '') ? `<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : '');
   const lastCheckin = c => (c.checkins || []).reduce((m, x) => (!m || x.date > m.date ? x : m), null);
   // Tablero "Esta semana": todo lo pendiente en un solo lugar, para no tener que acordarse de nada
   // Lo pendiente de la semana (lo usan el tablero y el dashboard)

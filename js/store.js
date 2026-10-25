@@ -34,6 +34,12 @@
     }
     return '0' + b64(bytes);
   }
+  // Todo código o link llega de afuera (WhatsApp): sin < > " sus textos no pueden inyectar HTML en la app ni en el panel
+  const SAFE = { '<': '‹', '>': '›', '"': '”' };
+  const clean = v => typeof v === 'string' ? v.replace(/[<>"]/g, c => SAFE[c])
+    : Array.isArray(v) ? v.map(clean)
+    : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k]) => k !== '__proto__').map(([k, x]) => [clean(k), clean(x)]))
+    : v;
   async function unpack(str) {
     str = String(str || '').trim();
     let bytes = unb64(str.slice(1));
@@ -41,7 +47,7 @@
       const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
       bytes = new Uint8Array(await new Response(stream).arrayBuffer());
     }
-    return JSON.parse(new TextDecoder().decode(bytes));
+    return clean(JSON.parse(new TextDecoder().decode(bytes)));
   }
 
   async function sha(text) {
