@@ -16,6 +16,7 @@
       activity: 'sed', training: [{ type: 'fuerza', days: 3, min: 60 }], trainTime: 'tarde', meals: E.defaultMeals(4),
       cooking: 'cocina', tupper: true, micro: true, diet: 3, allergens: [], exclude: [], dislikes: '', likes: '', budget: 'medio', alcohol: 'ocasional', supplements: '',
       medical: [], medicalText: '', sleep: 7, stress: 3, notes: '',
+      planType: 'online', experience: '', equipment: '', injuries: '', lifts: '', goal2: '', occupation: '', instagram: '', drive: '',
     };
   }
   function newClient(profile) {
@@ -45,9 +46,9 @@
     const d = n => S.addDays(S.today(), -n);
     Object.assign(cl.plan, { version: 1, sentVersion: 1, dirty: false, sentAt: Date.now() - 21 * 864e5, phases: true, start: d(21), free: 1 });
     cl.checkins = [
-      { date: d(14), avg: 81.9, prev: 82.4, adh: 78, done: 22, tot: 28, lib: 1, w: 6.1, cin: 90, e: 3, hu: 4, s: 3, dg: 4, no: 'Me costó el almuerzo en la calle los primeros días.' },
-      { date: d(7), avg: 81.4, prev: 81.9, adh: 86, done: 24, tot: 28, lib: 1, w: 7.4, cin: 89, e: 4, hu: 3, s: 3, dg: 4, no: 'Con el método de la mano me resulta más fácil comer afuera.' },
-      { date: d(0), avg: 81.0, prev: 81.4, adh: 89, done: 25, tot: 28, lib: 1, w: 7.9, cin: 88.5, e: 4, hu: 3, s: 4, dg: 5, no: 'Bien! Usé la comida libre en un asado y elegí colita de cuadril con ensalada.' },
+      { date: d(14), avg: 81.9, prev: 82.4, adh: 78, done: 22, tot: 28, lib: 1, w: 6.1, cin: 90, e: 3, hu: 4, s: 3, dg: 4, tr: 3, tp: 4, fa: 3, es: 3, mo: 0, no: 'Me costó el almuerzo en la calle los primeros días.' },
+      { date: d(7), avg: 81.4, prev: 81.9, adh: 86, done: 24, tot: 28, lib: 1, w: 7.4, cin: 89, e: 4, hu: 3, s: 3, dg: 4, tr: 4, tp: 4, fa: 3, es: 2, mo: 0, ej: 'La sentadilla se sintió liviana', no: 'Con el método de la mano me resulta más fácil comer afuera.' },
+      { date: d(0), avg: 81.0, prev: 81.4, adh: 89, done: 25, tot: 28, lib: 1, w: 7.9, cin: 88.5, e: 4, hu: 3, s: 4, dg: 5, tr: 4, tp: 4, fa: 4, es: 3, mo: 1, md: 'Hombro derecho en press banca', no: 'Bien! Usé la comida libre en un asado y elegí colita de cuadril con ensalada.' },
     ];
     D.clients[cl.id] = cl; save();
     return cl;
@@ -88,7 +89,7 @@
         o: m.options.map(o => ({ n: o.name, y: o.type === 'flex' ? 1 : 0, it: o.type === 'flex' ? [] : (o.items || []).map(it => [it.f, it.g]), tx: o.text || '' })),
       })),
       ms: P.msg || '', fd, pr, ca: cl.calc || {}, rs: P.recState || {}, cr: P.customRecs || [],
-      ph: P.phases === false ? '' : (P.start || ''), fr: P.free ?? 1,
+      ph: P.phases === false ? '' : (P.start || ''), fr: P.free ?? 1, sd: P.start || '',
     };
   }
   function clientFromPayload(pl) {
@@ -99,7 +100,7 @@
       target: { k: m.t[0], p: m.t[1], c: m.t[2], f: m.t[3] },
       options: (m.o || []).map(o => ({ id: E.uid(), name: o.n, type: o.y ? 'flex' : 'exact', items: (o.it || []).map(([f, g]) => ({ f, g })), text: o.tx || '' })),
     }));
-    Object.assign(cl.plan, { version: pl.ver || 1, sentVersion: pl.ver || 1, dirty: false, msg: pl.ms || '', recState: pl.rs || {}, customRecs: pl.cr || [], phases: !!pl.ph, start: pl.ph || '', free: pl.fr ?? 1 });
+    Object.assign(cl.plan, { version: pl.ver || 1, sentVersion: pl.ver || 1, dirty: false, msg: pl.ms || '', recState: pl.rs || {}, customRecs: pl.cr || [], phases: !!pl.ph, start: pl.sd || pl.ph || '', free: pl.fr ?? 1 });
     cl.profile.meals = cl.plan.meals.map(m => ({ id: m.id, type: m.type, name: m.name, time: m.time, pct: m.pct, ctx: m.ctx }));
     Object.entries(pl.fd || {}).forEach(([id, a]) => { if (/^u_/.test(id) && !D.customFoods[id]) D.customFoods[id] = NG.unpackFood(id, a); });
     return cl;
@@ -107,7 +108,7 @@
   async function makeLink(cl) {
     const P = cl.plan;
     if (P.dirty || !P.version) { P.version = (P.version || 0) + 1; P.dirty = false; }
-    if (P.phases !== false && !P.start) P.start = S.today(); // la fase 1 arranca el día que le mandás el primer link
+    if (!P.start) P.start = S.today(); // fases y fotos se cuentan desde el día que le mandás el primer link
     P.sentVersion = P.version; P.sentAt = Date.now();
     save();
     return S.baseUrl(D.settings) + '#p=' + (await S.pack(payload(cl)));
@@ -192,15 +193,34 @@
   function backupBanner() {
     const n = Object.keys(D.clients).length, days = D.lastBackup ? (Date.now() - D.lastBackup) / 864e5 : Infinity;
     if (!n || days < 7) return '';
-    return `<div class="banner warn"><span>💾 ${D.lastBackup ? `Tu último respaldo fue hace ${Math.floor(days)} días.` : 'Todavía no hiciste ningún respaldo.'} Guardá una copia en Drive o en tu mail para no perder datos.</span><button class="btn sm pri" data-a="backup">Respaldar ahora</button></div>`;
+    return `<div class="banner warn"><span>💾 ${D.lastBackup ? `Tu último respaldo fue hace ${Math.floor(days)} días.` : 'Todavía no hiciste ningún respaldo.'} Descargalo y guardalo en Drive → 01_COACHING → 04_RESPALDOS APP.</span><button class="btn sm pri" data-a="backup">Respaldar ahora</button></div>`;
+  }
+  const driveBtn = (url, label = '📁 Drive') => (url ? `<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : '');
+  const lastCheckin = c => (c.checkins || []).reduce((m, x) => (!m || x.date > m.date ? x : m), null);
+  // Tablero "Esta semana": todo lo pendiente en un solo lugar, para no tener que acordarse de nada
+  function weekBoard() {
+    const today = S.today(), active = Object.values(D.clients).filter(c => c.plan.sentVersion);
+    const recent = c => { const l = lastCheckin(c); return l && l.date >= S.addDays(today, -6) ? l : null; };
+    const blocks = [
+      ['📋', 'Check-ins que faltan', active.filter(c => (E.weekOf(c.plan.start) || 0) > 1 && !recent(c)), c => `<button class="btn wa sm" data-a="remind" data-id="${c.id}">Recordar</button>`],
+      ['🤕', 'Reportaron molestias', active.filter(c => (recent(c) || {}).mo === 1), c => `<span class="sm mut">${esc(recent(c).md || '')}</span>`],
+      ['📸', 'Tocan fotos esta semana', active.filter(c => E.photoDue(c.plan.start)), c => driveBtn(c.profile.drive) || '<span class="sm mut">cargá su carpeta de Drive</span>'],
+      ['📤', 'Planes con cambios sin enviar', Object.values(D.clients).filter(c => c.plan.meals.length && (c.plan.dirty || !c.plan.sentVersion)), c => `<button class="btn ghost sm" data-a="go" data-h="#coach/c/${c.id}/enviar">Enviar</button>`],
+    ].filter(b => b[2].length);
+    if (!Object.keys(D.clients).length) return '';
+    return `<section class="card wboard"><div class="row between"><h3>🗓️ Esta semana</h3><span class="sm mut">${fdate(today, true)}</span></div>
+      ${blocks.length ? blocks.map(([e, t, arr, act]) => `<div class="wbsec"><b>${e} ${t} (${arr.length})</b>${arr.map(c => `<div class="wbrow"><button class="link" data-a="open" data-id="${c.id}">${esc(c.profile.name || 'Sin nombre')}</button>${act(c)}</div>`).join('')}</div>`).join('')
+        : '<p class="sm">✅ Todo al día: no hay nada pendiente.</p>'}
+    </section>`;
   }
   function vDash() {
     const list = Object.values(D.clients).sort((a, b) => b.updatedAt - a.updatedAt)
       .filter(c => !cs.q || c.profile.name.toLowerCase().includes(cs.q.toLowerCase()));
     const local = location.protocol === 'file:' && !D.settings.appUrl;
     return `<header class="chead"><div><span class="brand">${esc(D.settings.brand)}</span><h1>Panel del entrenador</h1></div>
-        <div class="row gap-s"><button class="ib" data-a="go" data-h="#coach/ajustes" aria-label="Ajustes">${ic('gear', 20)}</button><button class="ib" data-a="lock" aria-label="Bloquear">${ic('lock', 20)}</button></div></header>
+        <div class="row gap-s">${driveBtn(D.settings.driveUrl, '📁')}<button class="ib" data-a="go" data-h="#coach/ajustes" aria-label="Ajustes">${ic('gear', 20)}</button><button class="ib" data-a="lock" aria-label="Bloquear">${ic('lock', 20)}</button></div></header>
       ${backupBanner()}
+      ${weekBoard()}
       ${local ? `<div class="banner info"><span>🌐 Estás usando la app desde un archivo de tu PC. Para que los links funcionen en el celular de tus alumnos, publicala gratis (ver LEEME) y cargá la dirección en <b>Ajustes</b>.</span></div>` : ''}
       <div class="qa">
         <button class="qab" data-a="newc"><span>➕</span><b>Nuevo alumno</b><small>Cargar datos a mano</small></button>
@@ -228,7 +248,7 @@
     const body = { perfil: tPerfil, objetivos: tObjetivos, plan: tPlan, consejos: tConsejos, enviar: tEnviar, progreso: tProgreso }[cs.tab] || tPerfil;
     return `<header class="chead"><button class="ib" data-a="go" data-h="#coach" aria-label="Volver">${ic('chevL', 22)}</button>
         <div class="grow"><h1>${esc(cl.profile.name || 'Nuevo alumno')}</h1><span class="sm mut">${g.e || ''} ${g.n || ''} · <span class="badge ${sc}">${stx}</span></span></div>
-        <div class="row gap-s"><button class="btn ghost sm hide-m" data-a="preview">${ic('eye', 16)} Ver como alumno</button><button class="btn pri sm" data-a="tab" data-t="enviar">${ic('send', 16)} Enviar</button></div></header>
+        <div class="row gap-s">${driveBtn(cl.profile.drive)}<button class="btn ghost sm hide-m" data-a="preview">${ic('eye', 16)} Ver como alumno</button><button class="btn pri sm" data-a="tab" data-t="enviar">${ic('send', 16)} Enviar</button></div></header>
       <nav class="ctabs">${TABS.map(([k, e, n]) => `<button class="${cs.tab === k ? 'on' : ''}" data-a="tab" data-t="${k}">${e} ${n}</button>`).join('')}</nav>
       ${warnBox(cl, cs.tab === 'perfil' || cs.tab === 'objetivos')}
       ${body(cl)}`;
@@ -279,6 +299,16 @@
           <button class="link sm danger-t" data-a="trdel" data-i="${i}">Quitar</button></div>`).join('')}
         <button class="btn ghost sm" data-a="tradd">${ic('plus', 15)} Agregar entrenamiento</button>
         ${fsel('Horario de entrenamiento', 'profile.trainTime', Object.entries(NG.TRAIN_TIME).map(([k, t]) => [k, t.n]))}
+      </section>
+      <section class="card"><h3>🏋️ Entrenamiento</h3>
+        ${fchips('Plan contratado', 'profile.planType', Object.entries(NG.PLAN_TYPES))}
+        ${fchips('Experiencia con cargas', 'profile.experience', Object.entries(NG.EXPERIENCE))}
+        ${fchips('Equipamiento', 'profile.equipment', Object.entries(NG.EQUIPMENT))}
+        ${ftext('Lesiones, cirugías o molestias', 'profile.injuries', 'Ninguna')}
+        ${ftext('Marcas aproximadas (sentadilla, banca, peso muerto, hip thrust, remo)', 'profile.lifts')}
+        ${ftext('Objetivos secundarios y plazo', 'profile.goal2')}
+        <div class="grid2">${fi('Ocupación y horarios', 'profile.occupation')}${fi('Instagram', 'profile.instagram', { ph: '@usuario' })}</div>
+        ${fi('📁 Carpeta del alumno en Drive (link)', 'profile.drive', { type: 'url', ph: 'https://drive.google.com/drive/folders/…', hint: 'Pegá el link de su carpeta en 02_ALUMNOS: te aparece un botón para abrirla directo.' })}
       </section>
       <section class="card"><h3>🍳 Contexto</h3>
         ${fchips('¿Cocina?', 'profile.cooking', Object.entries(NG.COOKING))}
@@ -467,15 +497,26 @@
       chart = `<svg viewBox="0 0 ${W} ${H}" class="chart"><polyline class="cline" points="${pts.map((p, i) => `${X(i)},${Y(p.avg)}`).join(' ')}"/>
         ${pts.map((p, i) => `<circle class="cdot" cx="${X(i)}" cy="${Y(p.avg)}" r="4"/><text class="axl" x="${X(i)}" y="${Y(p.avg) - 9}" text-anchor="middle">${n1(p.avg)}</text><text class="axl" x="${X(i)}" y="${H - 6}" text-anchor="middle">${fdate(p.date)}</text>`).join('')}</svg>`;
     }
-    return `<section class="card ${an.ok ? (an.tone === 'ok' ? 'okc' : 'warnc') : ''}"><h3>🧠 Análisis</h3>
+    // Alertas del último check-in que piden acción esta semana
+    const last = ck[0], alerts = [];
+    if (last && last.mo === 1) alerts.push(['bad', `🤕 Reportó molestia${last.md ? `: “${last.md}”` : ''}. Revisá ese ejercicio en Lyfta antes del próximo entreno.`]);
+    if (last && last.tr != null && last.tp && last.tr / last.tp < 0.75) alerts.push(['warn', `🏋️ Entrenó ${last.tr} de ${last.tp}: preguntale qué pasó y ajustá la rutina si no le da el tiempo.`]);
+    if (last && (last.fa >= 4 || last.es >= 4)) alerts.push(['warn', `😮‍💨 Fatiga ${last.fa}/5 y estrés ${last.es}/5: considerá bajar volumen o intensidad esta semana.`]);
+    if (last && last.ej) alerts.push(['info', `💪 Sobre los ejercicios: “${last.ej}”.`]);
+    if (last && last.me === 1) alerts.push(['info', '🩸 Semana premenstrual o menstrual: una suba de peso puede ser retención de líquido.']);
+    if (last && last.ft) alerts.push(['info', `📸 Le tocaban fotos esta semana: guardalas en su carpeta de Drive${cl.profile.drive ? '' : ' (cargá el link en su Perfil)'}.`]);
+    return `${alerts.length ? `<div class="warns">${alerts.map(([lv, t]) => `<div class="wn ${lv}">${esc(t)}</div>`).join('')}</div>` : ''}
+      <section class="card ${an.ok ? (an.tone === 'ok' ? 'okc' : 'warnc') : ''}"><h3>🧠 Análisis</h3>
         ${an.ok ? `<p><b>Tendencia: ${an.rateTxt}</b>${an.adh ? ` · adherencia ${an.adh}%` : ''}</p><p>${esc(an.msg)}</p>
           ${an.delta ? `<button class="btn pri" data-a="applyd" data-d="${an.delta}">Aplicar ${an.delta > 0 ? '+' : ''}${an.delta} kcal y reajustar el plan</button>` : ''}` : `<p class="mut">${esc(an.msg)}</p>`}
       </section>
       <section class="card"><div class="row between"><h3>📉 Peso promedio semanal</h3><button class="btn ghost sm" data-a="paste">📥 Pegar check-in</button></div>${chart}</section>
       <section class="card"><h3>📋 Check-ins (${ck.length})</h3>
-        ${ck.length ? `<div class="tblw"><table class="tbl"><thead><tr><th>Fecha</th><th>Peso</th><th>Adher.</th><th>Agua</th><th>⚡</th><th>😋</th><th>😴</th><th>🌿</th><th>Comentario</th><th></th></tr></thead><tbody>
+        ${ck.length ? `<div class="tblw"><table class="tbl"><thead><tr><th>Fecha</th><th>Peso</th><th>Comidas</th><th>Entrenos</th><th>Fatiga</th><th>Estrés</th><th>Molestias</th><th>Agua</th><th>⚡</th><th>😋</th><th>😴</th><th>🌿</th><th>Comentario</th><th></th></tr></thead><tbody>
           ${ck.map(c => `<tr><td>${fdate(c.date)}</td><td>${c.avg ? n1(c.avg) + ' kg' : '—'}${c.avg && c.prev ? `<small class="${c.avg < c.prev ? 'down' : 'up'}"> ${c.avg - c.prev > 0 ? '+' : ''}${n1(c.avg - c.prev)}</small>` : ''}${c.cin ? `<small> · ${n1(c.cin)} cm</small>` : ''}</td>
-            <td>${c.adh == null ? '—' : c.adh + '%'}${c.lib ? `<small> · 🍕${c.lib}</small>` : ''}</td><td>${c.w ? n1(c.w) : '—'}</td><td>${c.e || '—'}</td><td>${c.hu || '—'}</td><td>${c.s || '—'}</td><td>${c.dg || '—'}</td><td class="note-c">${esc(c.no || '')}</td>
+            <td>${c.adh == null ? '—' : c.adh + '%'}${c.lib ? `<small> · 🍕${c.lib}</small>` : ''}</td>
+            <td>${c.tr == null ? '—' : c.tr + (c.tp ? '/' + c.tp : '')}</td><td>${c.fa || '—'}</td><td>${c.es || '—'}</td>
+            <td class="note-c">${c.mo === 1 ? `<b class="bad-t">Sí</b> ${esc(c.md || '')}` : c.mo === 0 ? 'No' : '—'}</td><td>${c.w ? n1(c.w) : '—'}</td><td>${c.e || '—'}</td><td>${c.hu || '—'}</td><td>${c.s || '—'}</td><td>${c.dg || '—'}</td><td class="note-c">${esc(c.no || '')}</td>
             <td><button class="ib sm" data-a="ckdel" data-d="${c.date}" aria-label="Borrar">${ic('x', 14)}</button></td></tr>`).join('')}</tbody></table></div>`
           : '<div class="empty sm">Cuando el alumno toque «Enviar check-in» en su app, vas a recibir un WhatsApp. Pegalo con el botón 📥 y aparece acá.</div>'}
       </section>`;
@@ -493,8 +534,10 @@
       <section class="card"><h3>🌐 Dirección pública de la app</h3>
         ${sf('URL donde publicaste la app', 'appUrl', { type: 'url', ph: 'https://tuusuario.github.io/guia/', hint: 'Los links de planes y formularios usan esta dirección. Si la dejás vacía se usa la dirección actual.' })}
         <p class="sm mut">Dirección actual: ${esc(location.href.replace(/#.*$/, ''))}</p></section>
+      <section class="card"><h3>📁 Google Drive</h3>
+        ${sf('Carpeta de alumnos (link)', 'driveUrl', { type: 'url', ph: 'https://drive.google.com/drive/folders/…', hint: 'El link de 01_COACHING → 02_ALUMNOS. Aparece como botón 📁 arriba en tu panel.' })}</section>
       <section class="card"><h3>💾 Respaldo de datos</h3>
-        <p class="sm">Todo se guarda en este dispositivo. Hacé un respaldo semanal y guardalo en Google Drive o mandátelo por mail.</p>
+        <p class="sm">Todo se guarda en este dispositivo. Los viernes descargá el respaldo y guardalo en Drive → 01_COACHING → 04_RESPALDOS APP.</p>
         <p class="sm mut">Último respaldo: ${D.lastBackup ? new Date(D.lastBackup).toLocaleString('es-AR') : 'nunca'}</p>
         <div class="row gap wrapr"><button class="btn pri" data-a="backup">${ic('dl', 16)} Descargar respaldo</button><button class="btn ghost" data-a="restore">${ic('up', 16)} Restaurar respaldo</button></div>
         <p class="sm mut">También podés recuperar cualquier alumno pegando el link del plan que le enviaste (📥 Pegar mensaje).</p></section>
@@ -557,7 +600,8 @@
         const d = await S.unpack(chk[1]); const cl = d && D.clients[d.id];
         if (!cl) return U.toast('⚠️ Ese check-in es de un alumno que no está en este panel');
         cl.checkins = (cl.checkins || []).filter(c => c.date !== d.d);
-        cl.checkins.push({ date: d.d, avg: d.avg, prev: d.prev, adh: d.adh, done: d.done, tot: d.tot, lib: d.lib, w: d.w, hab: d.hab, cin: d.cin, e: d.e, hu: d.hu, s: d.s, dg: d.dg, no: d.no, ws: d.ws, ver: d.ver, at: Date.now() });
+        cl.checkins.push({ date: d.d, avg: d.avg, prev: d.prev, adh: d.adh, done: d.done, tot: d.tot, lib: d.lib, w: d.w,
+          tr: d.tr, tp: d.tp, fa: d.fa, es: d.es, mo: d.mo, md: d.md, ej: d.ej, me: d.me, ft: d.ft, hab: d.hab, cin: d.cin, e: d.e, hu: d.hu, s: d.s, dg: d.dg, no: d.no, ws: d.ws, ver: d.ver, at: Date.now() });
         cl.updatedAt = Date.now(); save(); U.closeAll(); U.toast(`✅ Check-in de ${first(cl.profile.name)} guardado`);
         cs.tab = 'progreso'; if (location.hash === '#coach/c/' + cl.id + '/progreso') render(); else location.hash = '#coach/c/' + cl.id + '/progreso'; return;
       }
@@ -652,6 +696,10 @@
         return;
       }
       case 'preview': location.hash = '#coach/pv/' + cl.id; return;
+      case 'remind': {
+        const c = D.clients[ds.id];
+        return U.wa(c.profile.phone, `¡Buenas ${first(c.profile.name)}! Hoy es día de check-in 📋\nAbrí tu app → Progreso → «Enviar check-in semanal» (son 2 minutitos) y me llega directo. Mañana te dejo todo ajustado 💪`);
+      }
       case 'demo': { const c = loadDemo(); U.toast('🧪 Alumno de ejemplo cargado'); cs.tab = 'plan'; location.hash = '#coach/c/' + c.id + '/plan'; return; }
     }
     if (!cl) return;

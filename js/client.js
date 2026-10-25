@@ -190,6 +190,7 @@
         <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
       ${ph && d === today ? phaseCard(ph) : ''}
+      ${d === today && photoDue() ? `<section class="card tipc"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda. Mandalas por WhatsApp junto con tu check-in del domingo, con la misma luz, lugar y ropa que la vez anterior.</p></section>` : ''}
       ${isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>. Así la abrís como una app y tus datos quedan guardados.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : ''}
       <section class="card">
         <div class="row between"><h3>Tu día</h3><span class="mut sm">objetivo ${n0(T.k)} kcal</span></div>
@@ -420,26 +421,48 @@
     st.shopBody = body;
     U.open(body());
   }
+  // Entrenamientos planificados por semana (según el perfil que cargó el entrenador)
+  const plannedTrainings = () => ((PL().pr || {}).training || []).reduce((s, t) => s + (+t.days || 0), 0);
+  const photoDue = () => E.photoDue(PL().sd || PL().ph, S.today());
+  // Check-in único de la semana: entrenamiento + alimentación + bienestar
   function sheetCheckin() {
-    const wk = weekStats(S.today());
-    st.ck = { e: 3, hu: 3, s: 3, dg: 3, no: '' };
+    const wk = weekStats(S.today()), pr = PL().pr || {}, planned = plannedTrainings();
+    st.ck = { e: 3, hu: 3, s: 3, dg: 3, fa: 3, es: 3, tr: null, tp: planned, mo: null, me: null };
+    const slider = (k, n, hint) => `<label class="fld"><span>${n}: <b id="ckv-${k}">3</b>/5${hint ? ` <small class="mut">(${hint})</small>` : ''}</span><input type="range" min="1" max="5" value="3" data-live="ck" data-c="${k}"></label>`;
+    const chips = (c, opts) => `<div class="chips">${opts.map(([v, n]) => `<button class="chip" data-a="ckset" data-c="${c}" data-v="${v}">${n}</button>`).join('')}</div>`;
     U.open(`<h3>📤 Check-in semanal</h3>
+      <p class="sm mut">Uno solo por semana, con entrenamiento y alimentación. Te lleva 2 minutos.</p>
       <div class="ckres">
         <div><small>Peso promedio</small><b>${wk.avg ? n1(wk.avg) + ' kg' : 'sin datos'}</b></div>
-        <div><small>Adherencia</small><b>${wk.adh == null ? '—' : wk.adh + '%'}</b></div>
+        <div><small>Comidas cumplidas</small><b>${wk.adh == null ? '—' : wk.adh + '%'}</b></div>
         <div><small>Agua</small><b>${wk.water ? n1(wk.water) + ' vasos' : '—'}</b></div></div>
-      ${[['e', '⚡ Energía'], ['hu', '😋 Hambre'], ['s', '😴 Descanso'], ['dg', '🌿 Digestión']].map(([k, n]) => `<label class="fld"><span>${n}: <b id="ckv-${k}">3</b>/5</span><input type="range" min="1" max="5" value="3" data-live="ck" data-c="${k}"></label>`).join('')}
-      <label class="fld"><span>¿Algo que quieras contarle a tu entrenador?</span><textarea id="ck-no" rows="3" placeholder="Cómo te sentiste, qué te costó, dudas…"></textarea></label>
+      <h4>🏋️ Entrenamiento</h4>
+      <div class="fld"><span>¿Cuántos entrenamientos hiciste esta semana?${planned ? ` (tenías ${planned})` : ''}</span>${chips('tr', Array.from({ length: Math.max(planned, 5) + 1 }, (_, i) => [i, String(i)]))}</div>
+      ${slider('fa', '😮‍💨 Fatiga', '1 fresco · 5 agotado')}${slider('es', '🧠 Estrés', '1 bajo · 5 alto')}
+      <div class="fld"><span>🤕 ¿Sentiste alguna molestia o dolor?</span>${chips('mo', [[0, 'No'], [1, 'Sí']])}</div>
+      <label class="fld" id="ck-md-wrap" style="display:none"><span>¿Dónde y en qué ejercicio?</span><input id="ck-md" placeholder="Ej: hombro derecho en press banca"></label>
+      <label class="fld"><span>💪 ¿Algún ejercicio te resultó muy fácil o muy difícil? <small class="mut">(opcional)</small></span><input id="ck-ej" placeholder="Ej: la sentadilla se sintió liviana"></label>
+      <h4>🍽️ Alimentación y bienestar</h4>
+      ${slider('e', '⚡ Energía')}${slider('hu', '😋 Hambre', '1 poca · 5 mucha')}${slider('s', '😴 Descanso')}${slider('dg', '🌿 Digestión')}
+      ${pr.sex === 'F' ? `<div class="fld"><span>🩸 ¿Estuviste en la semana previa o durante la menstruación?</span>${chips('me', [[0, 'No'], [1, 'Sí']])}</div>` : ''}
+      <label class="fld"><span>💬 ¿Algo más que quieras contarme?</span><textarea id="ck-no" rows="2" placeholder="Cómo te sentiste, qué te costó, dudas…"></textarea></label>
+      ${photoDue() ? `<div class="card tipc"><b>📸 Esta semana tocan tus fotos</b><p class="sm">De frente, de costado y de espalda. Mandalas por WhatsApp después de este check-in, con la misma luz, lugar y ropa que la vez anterior.</p></div>` : ''}
       ${!wk.avg ? '<p class="sm warnline">Tip: registrá tu peso en Progreso para que el check-in sea más útil.</p>' : ''}
       <div class="stack">${(PL().co || {}).w ? `<button class="btn wa block" data-a="ck-send">${ic('chat')} Enviar por WhatsApp</button>` : ''}
       <button class="btn ${(PL().co || {}).w ? 'ghost' : 'pri'} block" data-a="ck-copy">${ic('copy')} Copiar mensaje</button></div>`);
   }
   async function checkinText() {
     const P = PL(), wk = weekStats(S.today()), c = st.ck;
-    c.no = (document.getElementById('ck-no') || {}).value || '';
+    const val = id => ((document.getElementById(id) || {}).value || '').trim();
+    c.no = val('ck-no'); c.md = c.mo ? val('ck-md') : ''; c.ej = val('ck-ej');
     const ws = (st.data.weights || []).filter(w => w.d >= S.addDays(S.today(), -20)).map(w => [w.d, w.kg]);
-    const ph = phase();
-    const code = await S.pack({ v: 1, id: P.id, ver: P.ver, d: S.today(), avg: wk.avg ? Math.round(wk.avg * 10) / 10 : null, prev: wk.prev ? Math.round(wk.prev * 10) / 10 : null, adh: wk.adh, done: wk.done, tot: wk.tot, lib: wk.lib, ph: ph ? ph.idx + 1 : null, w: wk.water ? Math.round(wk.water * 10) / 10 : null, hab: wk.habits, cin: wk.cin, e: c.e, hu: c.hu, s: c.s, dg: c.dg, no: c.no.slice(0, 600), ws });
+    const ph = phase(), ft = photoDue();
+    const code = await S.pack({
+      v: 1, id: P.id, ver: P.ver, d: S.today(), avg: wk.avg ? Math.round(wk.avg * 10) / 10 : null, prev: wk.prev ? Math.round(wk.prev * 10) / 10 : null,
+      adh: wk.adh, done: wk.done, tot: wk.tot, lib: wk.lib, ph: ph ? ph.idx + 1 : null, w: wk.water ? Math.round(wk.water * 10) / 10 : null, hab: wk.habits, cin: wk.cin,
+      e: c.e, hu: c.hu, s: c.s, dg: c.dg, tr: c.tr, tp: c.tp, fa: c.fa, es: c.es, mo: c.mo, md: c.md.slice(0, 200), ej: c.ej.slice(0, 200), me: c.me, ft: ft ? 1 : 0,
+      no: c.no.slice(0, 600), ws,
+    });
     const diff = wk.avg && wk.prev ? wk.avg - wk.prev : null;
     const lines = [
       `📋 *Check-in semanal* – ${P.cl.n || ''}`,
@@ -447,10 +470,18 @@
       ph ? `🚦 Fase ${ph.idx + 1} · ${ph.ph.n} (semana ${ph.week})` : null,
       `⚖️ Peso promedio: ${wk.avg ? n1(wk.avg) + ' kg' : 'sin registrar'}${diff != null ? ` (${diff > 0 ? '+' : ''}${n1(diff)} kg vs semana anterior)` : ''}`,
       wk.cin ? `📏 Cintura: ${n1(wk.cin)} cm` : null,
-      `✅ Adherencia: ${wk.adh == null ? 'sin registrar' : `${wk.adh}% (${wk.done}/${wk.tot} comidas)`}`,
+      '', '*Entrenamiento*',
+      `🏋️ Entrenamientos: ${c.tr == null ? 'sin registrar' : c.tr + (c.tp ? ` de ${c.tp}` : '')}`,
+      `😮‍💨 Fatiga ${c.fa}/5 · 🧠 Estrés ${c.es}/5`,
+      `🤕 Molestias: ${c.mo == null ? 'sin responder' : c.mo ? `Sí — ${c.md || 'sin detalle'}` : 'No'}`,
+      c.ej ? `💪 ${c.ej}` : null,
+      '', '*Alimentación*',
+      `✅ Comidas cumplidas: ${wk.adh == null ? 'sin registrar' : `${wk.adh}% (${wk.done}/${wk.tot})`}`,
       freePerWeek() ? `🍕 Comidas libres: ${wk.lib} de ${freePerWeek()}` : null,
       `💧 Agua: ${wk.water ? n1(wk.water) + ' vasos/día' : 'sin registrar'}`,
       `⚡ Energía ${c.e}/5 · 😋 Hambre ${c.hu}/5 · 😴 Descanso ${c.s}/5 · 🌿 Digestión ${c.dg}/5`,
+      c.me === 1 ? '🩸 Semana premenstrual o menstrual' : null,
+      ft ? '📸 Esta semana tocan fotos: te las mando ahora' : null,
       c.no ? `💬 ${c.no}` : null,
       '', 'Código para el panel (no lo borres):', `#CHK:${code}`,
     ];
@@ -491,6 +522,12 @@
         return render();
       }
       case 'free': return sheetFree();
+      case 'ckset': {
+        st.ck[ds.c] = +ds.v;
+        el.parentElement.querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b === el));
+        if (ds.c === 'mo') { const w = document.getElementById('ck-md-wrap'); if (w) w.style.display = +ds.v ? '' : 'none'; }
+        return;
+      }
       case 'mopen': st.tab = 'plan'; st.openId = ds.m; render(); setTimeout(() => { const e = document.getElementById('meal-' + ds.m); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30); return;
       case 'mtoggle': st.openId = openId() === ds.m ? null : ds.m; return render();
       case 'opt': st.sel[ds.m] = +ds.o; return render();

@@ -12,6 +12,7 @@
     nMeals: 4, meals: E.defaultMeals(4), cooking: '', tupper: true, micro: true,
     diet: 3, allergens: [], dislikeTags: [], dislikes: '', likes: '', budget: 'medio', alcohol: 'ocasional', supplements: '',
     medical: [], medicalText: '', meds: '', sleep: 7, stress: 3, ok: false,
+    planType: 'online', experience: '', equipment: '', injuries: '', lifts: '', goal2: '', occupation: '', instagram: '',
   });
 
   async function mount(code) {
@@ -28,7 +29,7 @@
   const saveDraft = () => S.write(KD, { step: st.step, p: st.p });
   function setPath(o, path, v) { const k = path.split('.'); let x = o; for (let i = 0; i < k.length - 1; i++) x = x[k[i]]; x[k[k.length - 1]] = v; }
 
-  const STEPS = ['Inicio', 'Sobre vos', 'Objetivo', 'Actividad', 'Comidas', 'Alimentación', 'Salud', 'Enviar'];
+  const STEPS = ['Inicio', 'Sobre vos', 'Objetivo', 'Actividad', 'Entrenamiento', 'Comidas', 'Alimentación', 'Salud', 'Enviar'];
   const fld = (label, inner, hint) => `<label class="fld"><span>${label}</span>${inner}${hint ? `<small class="mut">${hint}</small>` : ''}</label>`;
   const inp = (f, o = {}) => `<input data-f="${f}" data-k="f-${f}" ${o.num ? 'type="text" inputmode="decimal" autocomplete="off"' : `type="${o.type || 'text'}"`} value="${esc(o.v != null ? o.v : getv(f))}" placeholder="${esc(o.ph || '')}" ${o.num ? 'data-num="1"' : ''}>`;
   const getv = f => f.split('.').reduce((x, k) => (x == null ? '' : x[k]), st.p);
@@ -46,7 +47,7 @@
         <p class="sm">💡 No hace falta que sepas todo: completá lo que puedas.</p></div>`;
       case 1: return `<h2>Sobre vos</h2>
         ${fld('Nombre y apellido *', inp('name', { ph: 'Ej: Juan Pérez' }))}
-        ${fld('WhatsApp', inp('phone', { type: 'tel', ph: 'Ej: 11 2345 6789' }))}
+        <div class="grid2">${fld('WhatsApp', inp('phone', { type: 'tel', ph: 'Ej: 11 2345 6789' }))}${fld('Instagram', inp('instagram', { ph: '@usuario (opcional)' }))}</div>
         ${fld('Sexo biológico *', chips('sex', [['M', 'Masculino'], ['F', 'Femenino']]), 'Se usa para calcular tu gasto energético.')}
         <div class="grid3">${fld('Edad *', inp('age', { num: 1, ph: 'años' }))}${fld('Altura *', inp('height', { num: 1, ph: 'cm' }))}${fld('Peso *', inp('weight', { num: 1, ph: 'kg' }))}</div>
         <div class="grid2">${fld('% de grasa', inp('bf', { num: 1, ph: 'opcional' }), 'Solo si te lo midieron')}${fld('Cintura', inp('waist', { num: 1, ph: 'cm (opcional)' }))}</div>`;
@@ -64,7 +65,15 @@
             ${p.training.length > 1 ? `<button class="link sm danger-t" data-a="trdel" data-i="${i}">Quitar</button>` : ''}</div>`).join('')}
           ${p.training.length < 3 ? `<button class="btn ghost sm" data-a="tradd">${ic('plus', 15)} Agregar otro tipo de entrenamiento</button>` : ''}
           ${fld('¿A qué hora entrenás normalmente?', chips('trainTime', Object.entries(NG.TRAIN_TIME).map(([k, t]) => [k, t.n])))}`}`;
-      case 4: return `<h2>Tu rutina de comidas</h2>
+      case 4: return `<h2>Tu entrenamiento</h2>
+        ${fld('Tipo de plan', chips('planType', Object.entries(NG.PLAN_TYPES)))}
+        ${fld('Experiencia entrenando con cargas *', chips('experience', Object.entries(NG.EXPERIENCE)))}
+        ${fld('¿Dónde entrenás? *', chips('equipment', Object.entries(NG.EQUIPMENT)))}
+        ${fld('Lesiones, cirugías o molestias', `<textarea data-f="injuries" data-k="f-inj" rows="2" placeholder="Si no tenés, dejalo vacío">${esc(p.injuries)}</textarea>`)}
+        ${fld('Pesos que movés más o menos', `<textarea data-f="lifts" data-k="f-lifts" rows="2" placeholder="Opcional. Ej: sentadilla 60 kg x 8, press banca 40 kg x 10">${esc(p.lifts)}</textarea>`)}
+        ${fld('Ocupación y horarios de trabajo', inp('occupation', { ph: 'Ej: vendedor, de 9 a 18' }))}
+        ${fld('Otros objetivos y en cuánto tiempo te gustaría lograrlos', `<textarea data-f="goal2" data-k="f-goal2" rows="2" placeholder="Opcional">${esc(p.goal2)}</textarea>`)}`;
+      case 5: return `<h2>Tu rutina de comidas</h2>
         ${fld('¿Cuántas comidas por día te queda cómodo hacer? *', chips('nMeals', [2, 3, 4, 5, 6].map(n => [n, String(n)])))}
         <p class="sm mut">Ajustá el horario y dónde hacés cada comida:</p>
         ${p.meals.map((m, i) => `<div class="card mrow"><b>${NG.MEAL_TYPES[m.type].e} ${esc(m.name)}</b>
@@ -73,7 +82,7 @@
         ${fld('¿Podés cocinar o prepararte la comida? *', `<div class="opts">${Object.entries(NG.COOKING).map(([k, n]) => `<button class="opt sm ${p.cooking === k ? 'on' : ''}" data-a="set" data-f="cooking" data-v="${k}"><b>${n}</b></button>`).join('')}</div>`)}
         ${p.meals.some(m => m.ctx !== 'casa') ? `${fld('¿Podés llevar vianda / tupper cuando comés fuera de casa?', chips('tupper', [[true, 'Sí'], [false, 'No']]))}
           ${fld('¿Tenés heladera y microondas donde comés?', chips('micro', [[true, 'Sí'], [false, 'No']]))}` : ''}`;
-      case 5: return `<h2>Tu alimentación</h2>
+      case 6: return `<h2>Tu alimentación</h2>
         ${fld('Tipo de alimentación *', chips('diet', [3, 2, 1, 0].map(k => [k, NG.DIETAS[k]])))}
         ${fld('Alergias o intolerancias', chips('allergens', Object.entries(NG.ALG), true))}
         ${fld('Alimentos que NO te gustan', chips('dislikeTags', Object.keys(NG.DISLIKES).map(k => [k, k]), true))}
@@ -82,17 +91,17 @@
         ${fld('Presupuesto para comida', chips('budget', Object.entries(NG.BUDGET)))}
         ${fld('Alcohol', chips('alcohol', Object.entries(NG.ALCOHOL)))}
         ${fld('¿Tomás algún suplemento?', inp('supplements', { ph: 'Ej: proteína, creatina, vitaminas' }))}`;
-      case 6: return `<h2>Tu salud</h2>
+      case 7: return `<h2>Tu salud</h2>
         <p class="sm mut">Esta información es importante para cuidarte. Marcá lo que corresponda:</p>
         <div class="checks">${NG.MED.map(m => `<button class="chk ${p.medical.includes(m.id) ? 'on' : ''}" data-a="tog" data-f="medical" data-v="${m.id}"><span class="tck">${p.medical.includes(m.id) ? ic('check', 14) : ''}</span>${esc(m.n)}</button>`).join('')}</div>
         ${fld('Otra condición o aclaración', inp('medicalText', { ph: 'Opcional' }))}
         ${fld('Medicación que tomás', inp('meds', { ph: 'Opcional' }))}
         <div class="grid2">${fld('Horas de sueño promedio', inp('sleep', { num: 1 }))}${fld('Estrés (1 bajo – 5 alto)', chips('stress', [1, 2, 3, 4, 5].map(n => [n, String(n)])))}</div>`;
-      case 7: {
+      case 8: {
         const g = NG.GOALS[p.goal] || {};
         return `<h2>¡Último paso!</h2>
           <div class="card summ"><b>${esc(p.name)}</b><span>${p.sex === 'F' ? 'Mujer' : 'Hombre'} · ${esc(p.age)} años · ${esc(p.height)} cm · ${esc(p.weight)} kg</span>
-          <span>${g.e || ''} ${g.n || ''}</span><span>🍽️ ${p.nMeals} comidas · ${NG.COOKING[p.cooking] || ''}</span><span>🥗 ${NG.DIETAS[p.diet]}${p.allergens.length ? ' · Sin ' + p.allergens.map(a => NG.ALG[a]).join(', ') : ''}</span>
+          <span>${g.e || ''} ${g.n || ''}</span><span>🏋️ ${[NG.EXPERIENCE[p.experience], NG.EQUIPMENT[p.equipment]].filter(Boolean).join(' · ')}</span><span>🍽️ ${p.nMeals} comidas · ${NG.COOKING[p.cooking] || ''}</span><span>🥗 ${NG.DIETAS[p.diet]}${p.allergens.length ? ' · Sin ' + p.allergens.map(a => NG.ALG[a]).join(', ') : ''}</span>
           ${p.medical.length ? `<span>🩺 ${p.medical.map(id => (NG.MED.find(m => m.id === id) || {}).n).join(', ')}</span>` : ''}</div>
           <button class="chk ${p.ok ? 'on' : ''}" data-a="okt"><span class="tck">${p.ok ? ic('check', 14) : ''}</span>Confirmo que los datos son correctos y entiendo que esta guía no reemplaza la consulta médica.</button>
           ${st.sent ? `<div class="card ok">✅ ¡Listo! Si no se abrió WhatsApp, usá «Copiar» y pegáselo a tu entrenador.</div>` : ''}
@@ -125,7 +134,9 @@
     }
     if (st.step === 2 && !p.goal) miss.push('objetivo');
     if (st.step === 3 && !p.activity) miss.push('nivel de actividad');
-    if (st.step === 4 && !p.cooking) miss.push('si podés cocinar');
+    if (st.step === 4 && !p.experience) miss.push('tu experiencia');
+    if (st.step === 4 && !p.equipment) miss.push('dónde entrenás');
+    if (st.step === 5 && !p.cooking) miss.push('si podés cocinar');
     if (miss.length) { U.toast('Completá: ' + miss.join(', ')); return false; }
     return true;
   }
@@ -141,6 +152,8 @@
       diet: +p.diet, allergens: p.allergens.concat(p.medical.includes('celiaquia') && !p.allergens.includes('g') ? ['g'] : []), exclude, dislikes: [p.dislikeTags.join(', '), p.dislikes].filter(Boolean).join(' · '), likes: p.likes,
       budget: p.budget, alcohol: p.alcohol, supplements: p.supplements,
       medical: p.medical, medicalText: [p.medicalText, p.meds ? 'Medicación: ' + p.meds : ''].filter(Boolean).join(' · '), sleep: +p.sleep || '', stress: +p.stress || '',
+      planType: p.planType, experience: p.experience, equipment: p.equipment, injuries: p.injuries, lifts: p.lifts, goal2: p.goal2,
+      occupation: p.occupation, instagram: p.instagram,
     };
   }
   async function message() {
@@ -150,11 +163,13 @@
       `📝 *Formulario inicial* – ${pr.name}`,
       `${g.e || ''} Objetivo: ${g.n || '-'}`,
       `👤 ${pr.sex === 'F' ? 'Mujer' : 'Hombre'} · ${pr.age} años · ${pr.height} cm · ${pr.weight} kg`,
+      `🏋️ ${[NG.PLAN_TYPES[pr.planType], NG.EXPERIENCE[pr.experience], NG.EQUIPMENT[pr.equipment]].filter(Boolean).join(' · ')}`,
+      pr.injuries ? `🤕 Lesiones o molestias: ${pr.injuries}` : null,
       `🍽️ ${pr.meals.length} comidas · ${NG.COOKING[pr.cooking] || ''}`,
       `🥗 ${NG.DIETAS[pr.diet]}${pr.allergens.length ? ' · Sin: ' + pr.allergens.map(a => NG.ALG[a]).join(', ') : ''}`,
-      pr.medical.length || pr.medicalText ? `🩺 Salud: ${pr.medical.map(id => (NG.MED.find(m => m.id === id) || {}).n).concat(pr.medicalText ? [pr.medicalText] : []).join(' · ')}` : '',
+      pr.medical.length || pr.medicalText ? `🩺 Salud: ${pr.medical.map(id => (NG.MED.find(m => m.id === id) || {}).n).concat(pr.medicalText ? [pr.medicalText] : []).join(' · ')}` : null,
       '', 'Código para el panel (no lo borres):', `#FRM:${code}`,
-    ].filter((l, i) => l !== '' || i > 5).join('\n');
+    ].filter(l => l !== null).join('\n');
   }
 
   async function click(a, el) {

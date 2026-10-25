@@ -461,12 +461,19 @@
   /* ── Arranque por fases ────────────────────────────────────────── */
   const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   // Semana 1–2 → Base · 3–4 → Plan completo · 5 en adelante → Autonomía
-  function phaseOf(start, today) {
+  // Semana del plan (1, 2, 3…) contando desde el día que se envió el primer link
+  function weekOf(start, today) {
     if (!start) return null;
     const days = Math.floor((Date.parse(today || todayKey()) - Date.parse(start)) / 864e5);
-    const week = Math.floor(Math.max(0, days) / 7) + 1, idx = week <= 2 ? 0 : week <= 4 ? 1 : 2;
+    return Math.floor(Math.max(0, days) / 7) + 1;
+  }
+  function phaseOf(start, today) {
+    const week = weekOf(start, today); if (!week) return null;
+    const idx = week <= 2 ? 0 : week <= 4 ? 1 : 2;
     return { idx, week, ph: NG.PHASES[idx], inPhase: idx === 2 ? week - 4 : week - idx * 2 };
   }
+  // Fotos de progreso: al inicio y cada 4 semanas (semanas 4, 8, 12…)
+  const photoDue = (start, today) => { const w = weekOf(start, today); return !!w && w % 4 === 0; };
 
   /* ── Análisis de check-ins ─────────────────────────────────────── */
   function analyze(cl, T) {
@@ -504,6 +511,6 @@
 
   NG.E = {
     r, uid, mac, sum, targets, warnings, defaultMeals, tagTraining, distribute, fit, isFixed,
-    allowedFood, cookLevel, genPlan, buildOptions, anotherOption, flexOption, hands, exchanges, recs, activeRecs, analyze, toH, phaseOf,
+    allowedFood, cookLevel, genPlan, buildOptions, anotherOption, flexOption, hands, exchanges, recs, activeRecs, analyze, toH, phaseOf, weekOf, photoDue,
   };
 })(window.NG);

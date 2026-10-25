@@ -216,6 +216,10 @@
     nada: 'No cocino: compro o como afuera',
   };
   NG.BUDGET = { bajo: 'Ajustado', medio: 'Medio', alto: 'Holgado' };
+  // Datos de entrenamiento del alta (reemplazan al formulario de bienvenida y la ficha de Google)
+  NG.PLAN_TYPES = { online: 'Online', presencial: 'Presencial', hibrido: 'Híbrido' };
+  NG.EXPERIENCE = { cero: 'Nunca entrené', m6: 'Menos de 6 meses', a1: '6 a 12 meses', a3: '1 a 3 años', mas: 'Más de 3 años' };
+  NG.EQUIPMENT = { gym: 'Gimnasio completo', barrio: 'Gimnasio de barrio o básico', casa: 'En casa o calistenia', otro: 'Otro' };
   NG.ALCOHOL = { nunca: 'No tomo', ocasional: 'Ocasional (eventos)', semanal: 'Fines de semana', frecuente: 'Varias veces por semana' };
 
   // Condiciones de salud: lv = nivel de alerta para el entrenador

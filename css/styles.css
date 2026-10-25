@@ -348,6 +348,12 @@ details.out summary { cursor: pointer; font-weight: 750; font-size: 14px; }
 .sw { width: 44px; height: 26px; border-radius: 99px; background: var(--line2); border: 0; position: relative; flex-shrink: 0; cursor: pointer; padding: 0; margin-top: 2px; }
 .sw i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
 .sw.on { background: var(--acc); } .sw.on i { left: 21px; }
+.wboard { border-left: 4px solid var(--acc); }
+.wbsec { margin-top: 10px; }
+.wbsec > b { display: block; font-size: 14px; margin-bottom: 4px; }
+.wbrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.wbrow:last-child { border-bottom: 0; }
+.wbrow .link { padding: 2px 0; text-align: left; }
 .phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin: 10px 0; }
 .phs { background: var(--card2); border: 2px solid transparent; border-radius: 12px; padding: 10px 12px; }
 .phs.on { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 10%, var(--card2)); }
