@@ -504,7 +504,7 @@
     if (last && (last.fa >= 4 || last.es >= 4)) alerts.push(['warn', `😮‍💨 Fatiga ${last.fa}/5 y estrés ${last.es}/5: considerá bajar volumen o intensidad esta semana.`]);
     if (last && last.ej) alerts.push(['info', `💪 Sobre los ejercicios: “${last.ej}”.`]);
     if (last && last.me === 1) alerts.push(['info', '🩸 Semana premenstrual o menstrual: una suba de peso puede ser retención de líquido.']);
-    if (last && last.ft) alerts.push(['info', `📸 Le tocaban fotos esta semana: guardalas en su carpeta de Drive${cl.profile.drive ? '' : ' (cargá el link en su Perfil)'}.`]);
+    if (last && last.ft) alerts.push(['info', `📸 Le tocaban fotos esta semana: fijate que estén en su carpeta de Drive (03 Fotos de Progreso)${cl.profile.drive ? '' : '; cargá el link de su carpeta en el Perfil'}.`]);
     return `${alerts.length ? `<div class="warns">${alerts.map(([lv, t]) => `<div class="wn ${lv}">${esc(t)}</div>`).join('')}</div>` : ''}
       <section class="card ${an.ok ? (an.tone === 'ok' ? 'okc' : 'warnc') : ''}"><h3>🧠 Análisis</h3>
         ${an.ok ? `<p><b>Tendencia: ${an.rateTxt}</b>${an.adh ? ` · adherencia ${an.adh}%` : ''}</p><p>${esc(an.msg)}</p>

@@ -190,7 +190,7 @@
         <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
       ${ph && d === today ? phaseCard(ph) : ''}
-      ${d === today && photoDue() ? `<section class="card tipc"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda. Mandalas por WhatsApp junto con tu check-in del domingo, con la misma luz, lugar y ropa que la vez anterior.</p></section>` : ''}
+      ${d === today && photoDue() ? `<section class="card tipc"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Subilas a tu carpeta de Drive, en «03 Fotos de Progreso» (la misma carpeta de tus videos).</p></section>` : ''}
       ${isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>. Así la abrís como una app y tus datos quedan guardados.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : ''}
       <section class="card">
         <div class="row between"><h3>Tu día</h3><span class="mut sm">objetivo ${n0(T.k)} kcal</span></div>
@@ -446,7 +446,7 @@
       ${slider('e', '⚡ Energía')}${slider('hu', '😋 Hambre', '1 poca · 5 mucha')}${slider('s', '😴 Descanso')}${slider('dg', '🌿 Digestión')}
       ${pr.sex === 'F' ? `<div class="fld"><span>🩸 ¿Estuviste en la semana previa o durante la menstruación?</span>${chips('me', [[0, 'No'], [1, 'Sí']])}</div>` : ''}
       <label class="fld"><span>💬 ¿Algo más que quieras contarme?</span><textarea id="ck-no" rows="2" placeholder="Cómo te sentiste, qué te costó, dudas…"></textarea></label>
-      ${photoDue() ? `<div class="card tipc"><b>📸 Esta semana tocan tus fotos</b><p class="sm">De frente, de costado y de espalda. Mandalas por WhatsApp después de este check-in, con la misma luz, lugar y ropa que la vez anterior.</p></div>` : ''}
+      ${photoDue() ? `<div class="card tipc"><b>📸 Esta semana tocan tus fotos</b><p class="sm">De frente, de costado y de espalda, con la misma luz, lugar y ropa que la vez anterior. Cuando termines este check-in, subilas a tu carpeta de Drive, en «03 Fotos de Progreso».</p></div>` : ''}
       ${!wk.avg ? '<p class="sm warnline">Tip: registrá tu peso en Progreso para que el check-in sea más útil.</p>' : ''}
       <div class="stack">${(PL().co || {}).w ? `<button class="btn wa block" data-a="ck-send">${ic('chat')} Enviar por WhatsApp</button>` : ''}
       <button class="btn ${(PL().co || {}).w ? 'ghost' : 'pri'} block" data-a="ck-copy">${ic('copy')} Copiar mensaje</button></div>`);
@@ -481,7 +481,7 @@
       `💧 Agua: ${wk.water ? n1(wk.water) + ' vasos/día' : 'sin registrar'}`,
       `⚡ Energía ${c.e}/5 · 😋 Hambre ${c.hu}/5 · 😴 Descanso ${c.s}/5 · 🌿 Digestión ${c.dg}/5`,
       c.me === 1 ? '🩸 Semana premenstrual o menstrual' : null,
-      ft ? '📸 Esta semana tocan fotos: te las mando ahora' : null,
+      ft ? '📸 Esta semana tocan fotos: las subo a mi carpeta de Drive' : null,
       c.no ? `💬 ${c.no}` : null,
       '', 'Código para el panel (no lo borres):', `#CHK:${code}`,
     ];
