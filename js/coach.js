@@ -186,7 +186,29 @@
     dashSync();
     const r = cs.route[1];
     const html = r === 'c' ? vClient() : r === 'ajustes' ? vSettings() : vDash();
-    U.paint(root, `<div class="wrap coach">${html}</div>`);
+    U.paint(root, `<div class="shell">${side()}<main class="wrap coach">${html}</main></div>`);
+  }
+
+  // Barra lateral (solo en PC): navegación, buscador y todos los alumnos a mano
+  const ini = n => String(n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+  const ago = d => { const n = Math.round((Date.parse(S.today()) - Date.parse(d)) / 864e5); return n <= 0 ? 'hoy' : n === 1 ? 'ayer' : `hace ${n} días`; };
+  function side() {
+    const r = cs.route[1], sel = r === 'c' ? cs.route[2] : '', q = cs.q.toLowerCase();
+    const list = Object.values(D.clients).filter(c => !q || (c.profile.name || '').toLowerCase().includes(q))
+      .sort((a, b) => (a.profile.name || '').localeCompare(b.profile.name || ''));
+    return `<aside class="side">
+      <div class="side-h"><span class="brand">${esc(D.settings.brand)}</span><b>Panel</b></div>
+      <nav class="side-nav">
+        <button class="${!r ? 'on' : ''}" data-a="go" data-h="#coach">${ic('users', 17)} Inicio</button>
+        <button class="${r === 'ajustes' ? 'on' : ''}" data-a="go" data-h="#coach/ajustes">${ic('gear', 17)} Ajustes</button>
+        ${/^https:\/\//i.test(D.settings.driveUrl || '') ? `<a href="${esc(D.settings.driveUrl)}" target="_blank" rel="noopener">${ic('link', 17)} Carpeta de Drive</a>` : ''}
+      </nav>
+      <div class="side-sec"><span class="eyebrow">Alumnos · ${Object.keys(D.clients).length}</span><button class="ib sm" data-a="newc" aria-label="Nuevo alumno">${ic('plus', 15)}</button></div>
+      <input class="search" type="search" placeholder="Buscar…" value="${esc(cs.q)}" data-live="q" data-k="q-side">
+      <div class="side-list">${list.map(c => `<button class="side-c ${c.id === sel ? 'on' : ''}" data-a="open" data-id="${c.id}">
+        <span class="av">${esc(ini(c.profile.name))}</span><span class="grow"><b>${esc(c.profile.name || 'Sin nombre')}</b><small>${esc((NG.GOALS[c.profile.goal] || {}).n || '')}</small></span><i class="st ${status(c)[0]}"></i></button>`).join('') || '<p class="sm mut">Sin resultados.</p>'}</div>
+      <div class="side-f"><button class="link sm" data-a="formlink">Link del formulario</button><button class="ib sm" data-a="lock" aria-label="Bloquear">${ic('lock', 15)}</button></div>
+    </aside>`;
   }
 
   function backupBanner() {
@@ -234,37 +256,68 @@
       ['📤', 'Planes con cambios sin enviar', P.unsent, c => `<button class="btn ghost sm" data-a="go" data-h="#coach/c/${c.id}/enviar">Enviar</button>`],
     ].filter(b => b[2].length);
     if (!Object.keys(D.clients).length) return '';
-    return `<section class="card wboard"><div class="row between"><h3>🗓️ Esta semana</h3><span class="sm mut">${fdate(today, true)}</span></div>
-      ${blocks.length ? blocks.map(([e, t, arr, act]) => `<div class="wbsec"><b>${e} ${t} (${arr.length})</b>${arr.map(c => `<div class="wbrow"><button class="link" data-a="open" data-id="${c.id}">${esc(c.profile.name || 'Sin nombre')}</button>${act(c)}</div>`).join('')}</div>`).join('')
-        : '<p class="sm">✅ Todo al día: no hay nada pendiente.</p>'}
+    // Franja de la semana: qué días llegaron check-ins (punto lima) y dónde estás hoy
+    const mon = S.addDays(today, -((new Date(today + 'T12:00:00').getDay() + 6) % 7));
+    const days = Array.from({ length: 7 }, (_, i) => S.addDays(mon, i));
+    const got = d => Object.values(D.clients).filter(c => (c.checkins || []).some(k => k.date === d)).length;
+    return `<section class="card agenda"><div class="row between"><h3>Esta semana</h3><span class="sm mut">${fdate(today, true)}</span></div>
+      <div class="wk">${days.map(d => { const n = got(d); return `<div class="${d === today ? 'on' : ''} ${d > today ? 'fut' : ''}"><small>${fdate(d).split(' ')[0]}</small><b>${+d.slice(8)}</b><i>${'<u></u>'.repeat(Math.min(n, 3))}</i></div>`; }).join('')}</div>
+      ${blocks.length ? blocks.map(([e, t, arr, act]) => `<div class="wbsec"><b>${e} ${t}<span class="cnt">${arr.length}</span></b>${arr.map(c => `<div class="wbrow"><button class="who" data-a="open" data-id="${c.id}"><span class="av sm">${esc(ini(c.profile.name))}</span>${esc(c.profile.name || 'Sin nombre')}</button>${act(c)}</div>`).join('')}</div>`).join('')
+        : '<div class="allok"><b>Todo al día</b><span class="sm mut">No hay nada pendiente esta semana.</span></div>'}
     </section>`;
+  }
+  // Indicadores del inicio: cada uno con su propia forma (número, anillo, barras, desglose)
+  function kpis() {
+    const all = Object.values(D.clients), active = all.filter(c => c.plan.sentVersion), P = pendings();
+    if (!all.length) return '';
+    const got = active.filter(recentCheckin).length;
+    const adh = active.map(c => [c, +(lastCheckin(c) || {}).adh]).filter(([, a]) => a > 0);
+    const avg = adh.length ? Math.round(adh.reduce((s, [, a]) => s + a, 0) / adh.length) : null;
+    const pend = [['Check-ins', P.missing], ['Molestias', P.pain], ['Fotos', P.photos], ['Sin enviar', P.unsent]];
+    const total = pend.reduce((s, [, l]) => s + l.length, 0);
+    return `<div class="kpis">
+      <div class="kpi"><span class="eyebrow">Alumnos activos</span><b class="big">${active.length}</b><span class="sm mut">${all.length - active.length ? `+ ${all.length - active.length} sin plan enviado` : 'todos con plan enviado'}</span>
+        <div class="avs">${active.slice(0, 6).map(c => `<span class="av sm" title="${esc(c.profile.name)}">${esc(ini(c.profile.name))}</span>`).join('')}</div></div>
+      <div class="kpi row gap"><div class="grow"><span class="eyebrow">Check-ins · semana</span><b class="big">${got}<small>/${active.length}</small></b><span class="sm mut">${active.length - got ? `faltan ${active.length - got}` : 'llegaron todos'}</span></div>${U.ring(active.length ? got / active.length * 100 : 0, { size: 74, label: active.length ? Math.round(got / active.length * 100) + '%' : '—', color: 'var(--acc-ink)' })}</div>
+      <div class="kpi"><span class="eyebrow">Adherencia promedio</span><b class="big">${avg == null ? '—' : avg + '<small>%</small>'}</b>
+        <div class="bars">${adh.length ? adh.map(([c, a]) => `<i style="height:${Math.max(8, a)}%" class="${a >= 80 ? 'hi' : ''}" title="${esc(c.profile.name)}: ${a}%"></i>`).join('') : '<span class="sm mut">Sin check-ins todavía</span>'}</div></div>
+      <div class="kpi"><span class="eyebrow">Pendientes</span><b class="big">${total}</b>
+        <div class="pend">${pend.map(([n, l]) => `<span class="${l.length ? 'has' : ''}"><b>${l.length}</b>${n}</span>`).join('')}</div></div>
+    </div>`;
+  }
+  // Alumnos como filas: se leen de un vistazo y se comparan entre sí (en celular se apilan)
+  function clientRows(list) {
+    return `<div class="rows"><div class="rh"><span>Alumno</span><span>Plan</span><span>Peso</span><span>Adherencia</span><span>Último check-in</span><span>Estado</span></div>
+      ${list.map(c => {
+        const T = E.targets(c), [sc, stx] = status(c), g = NG.GOALS[c.profile.goal] || {}, lc = lastCheckin(c);
+        const d = lc && lc.avg && lc.prev ? lc.avg - lc.prev : null;
+        return `<button class="rw" data-a="open" data-id="${c.id}">
+          <span class="rw-who"><span class="av">${esc(ini(c.profile.name))}</span><span class="grow"><b>${esc(c.profile.name || 'Sin nombre')}</b><small>${g.e || ''} ${g.n || ''}${medAlert(c) ? ' · <span class="bad-t">revisar salud</span>' : ''}</small></span></span>
+          <span class="rw-plan"><b>${n0(T.kcal)}</b> kcal<small>P ${T.p} · C ${T.c} · G ${T.f}</small></span>
+          <span class="rw-kg"><b>${n1(lc && lc.avg ? lc.avg : c.profile.weight)}</b> kg${d != null ? `<small class="${d < 0 ? 'dn' : 'up'}">${d > 0 ? '▲' : '▼'} ${n1(Math.abs(d))}</small>` : ''}</span>
+          <span class="rw-adh">${lc && lc.adh != null ? `<span class="mbar"><i style="width:${lc.adh}%"></i></span><small>${lc.adh}%</small>` : '<small class="mut">—</small>'}</span>
+          <span class="rw-ck sm ${lc ? '' : 'mut'}">${lc ? ago(lc.date) : 'sin check-ins'}</span>
+          <span class="rw-st"><span class="badge ${sc}">${stx}</span>${ic('chevR', 16)}</span></button>`;
+      }).join('')}</div>`;
   }
   function vDash() {
     const list = Object.values(D.clients).sort((a, b) => b.updatedAt - a.updatedAt)
       .filter(c => !cs.q || c.profile.name.toLowerCase().includes(cs.q.toLowerCase()));
     const local = location.protocol === 'file:' && !D.settings.appUrl;
-    return `<header class="chead"><div><span class="brand">${esc(D.settings.brand)}</span><h1>Panel del entrenador</h1></div>
-        <div class="row gap-s">${driveBtn(D.settings.driveUrl, '📁')}<button class="ib" data-a="go" data-h="#coach/ajustes" aria-label="Ajustes">${ic('gear', 20)}</button><button class="ib" data-a="lock" aria-label="Bloquear">${ic('lock', 20)}</button></div></header>
+    const h = new Date().getHours(), hi = h < 12 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
+    return `<header class="chead dhead"><div><span class="brand">${esc(D.settings.brand)} · ${fdate(S.today(), true)}</span><h1>${hi}, ${esc(first(D.settings.name))}</h1></div>
+        <div class="row gap-s wrapr"><button class="btn ghost sm" data-a="formlink">${ic('link', 15)} Link del formulario</button><button class="btn ghost sm" data-a="newc">${ic('plus', 15)} Nuevo alumno</button><button class="btn pri sm" data-a="paste">${ic('dl', 15)} Pegar mensaje</button>
+          <span class="mob">${driveBtn(D.settings.driveUrl, '📁')}<button class="ib" data-a="go" data-h="#coach/ajustes" aria-label="Ajustes">${ic('gear', 20)}</button><button class="ib" data-a="lock" aria-label="Bloquear">${ic('lock', 20)}</button></span></div></header>
       ${backupBanner()}
-      ${weekBoard()}
       ${local ? `<div class="banner info"><span>🌐 Estás usando la app desde un archivo de tu PC. Para que los links funcionen en el celular de tus alumnos, publicala gratis (ver LEEME) y cargá la dirección en <b>Ajustes</b>.</span></div>` : ''}
-      <div class="qa">
-        <button class="qab" data-a="newc"><span>➕</span><b>Nuevo alumno</b><small>Cargar datos a mano</small></button>
-        <button class="qab" data-a="paste"><span>📥</span><b>Pegar mensaje</b><small>Formulario, check-in o link</small></button>
-        <button class="qab" data-a="formlink"><span>📝</span><b>Link del formulario</b><small>Para alumnos nuevos</small></button>
-      </div>
-      <div class="row between"><h2>Alumnos <span class="mut">(${Object.keys(D.clients).length})</span></h2>
-        <input class="search" type="search" placeholder="Buscar…" value="${esc(cs.q)}" data-live="q" data-k="q"></div>
-      ${list.length ? `<div class="cgrid">${list.map(c => {
-        const T = E.targets(c), [sc, stx] = status(c), g = NG.GOALS[c.profile.goal] || {}, lc = (c.checkins || []).slice(-1)[0];
-        return `<button class="ccard" data-a="open" data-id="${c.id}">
-          <div class="row between"><b>${esc(c.profile.name || 'Sin nombre')}</b><span class="badge ${sc}">${stx}</span></div>
-          <div class="sm mut">${g.e || ''} ${g.n || ''} · ${n1(c.profile.weight)} kg</div>
-          <div class="sm">${n0(T.kcal)} kcal · P ${T.p} · C ${T.c} · G ${T.f}</div>
-          <div class="sm mut">${lc ? `Último check-in: ${fdate(lc.date)}${lc.avg ? ` · ${n1(lc.avg)} kg` : ''}` : 'Sin check-ins todavía'}</div>
-          ${medAlert(c) ? '<div class="sm bad-t">⚠️ Revisar alertas de salud</div>' : ''}</button>`;
-      }).join('')}</div>` : `<div class="empty">${cs.q ? 'Sin resultados.' : '👋 Todavía no tenés alumnos.<br>Enviá el <b>link del formulario</b> a tu primer asesorado o creá uno a mano.'}</div>`}
-      ${!cs.q && !Object.values(D.clients).some(c => c.demo) ? `<div class="center"><button class="btn ghost sm" data-a="demo">🧪 Cargar un alumno de ejemplo para explorar la app</button></div>` : ''}`;
+      ${kpis()}
+      <div class="dgrid">
+        <section class="dmain"><div class="row between"><h2>Alumnos <span class="mut">${Object.keys(D.clients).length}</span></h2>
+          <input class="search dsearch" type="search" placeholder="Buscar…" value="${esc(cs.q)}" data-live="q" data-k="q"></div>
+          ${list.length ? clientRows(list) : `<div class="empty">${cs.q ? 'Sin resultados.' : '👋 Todavía no tenés alumnos.<br>Enviá el <b>link del formulario</b> a tu primer asesorado o creá uno a mano.'}</div>`}
+          ${!cs.q && !Object.values(D.clients).some(c => c.demo) ? `<div class="center"><button class="btn ghost sm" data-a="demo">🧪 Cargar un alumno de ejemplo para explorar la app</button></div>` : ''}</section>
+        <div class="dside">${weekBoard()}</div>
+      </div>`;
   }
 
   /* ── Ficha del alumno ──────────────────────────────────────────── */
@@ -272,12 +325,37 @@
   function vClient() {
     const cl = cur(), [sc, stx] = status(cl), g = NG.GOALS[cl.profile.goal] || {};
     const body = { perfil: tPerfil, objetivos: tObjetivos, plan: tPlan, consejos: tConsejos, enviar: tEnviar, progreso: tProgreso }[cs.tab] || tPerfil;
-    return `<header class="chead"><button class="ib" data-a="go" data-h="#coach" aria-label="Volver">${ic('chevL', 22)}</button>
+    return `<div class="cfile">${summary(cl)}<div class="cmain">
+      <header class="chead cl-head"><button class="ib" data-a="go" data-h="#coach" aria-label="Volver">${ic('chevL', 22)}</button>
         <div class="grow"><h1>${esc(cl.profile.name || 'Nuevo alumno')}</h1><span class="sm mut">${g.e || ''} ${g.n || ''} · <span class="badge ${sc}">${stx}</span></span></div>
         <div class="row gap-s">${driveBtn(cl.profile.drive)}<button class="btn ghost sm hide-m" data-a="preview">${ic('eye', 16)} Ver como alumno</button><button class="btn pri sm" data-a="tab" data-t="enviar">${ic('send', 16)} Enviar</button></div></header>
       <nav class="ctabs">${TABS.map(([k, e, n]) => `<button class="${cs.tab === k ? 'on' : ''}" data-a="tab" data-t="${k}">${e} ${n}</button>`).join('')}</nav>
       ${warnBox(cl, cs.tab === 'perfil' || cs.tab === 'objetivos')}
-      ${body(cl)}`;
+      ${body(cl)}</div></div>`;
+  }
+  // Resumen fijo al costado de la ficha (solo en PC): lo que mirás siempre, sin cambiar de pestaña
+  function summary(cl) {
+    const T = E.targets(cl), [sc, stx] = status(cl), g = NG.GOALS[cl.profile.goal] || {}, lc = lastCheckin(cl), p = cl.profile;
+    const kc = [T.p * 4, T.c * 4, T.f * 9], tot = kc[0] + kc[1] + kc[2] || 1, ph = cl.plan.start ? E.phaseOf(cl.plan.start) : null;
+    const ws = (cl.checkins || []).filter(k => +k.avg > 0).sort((a, b) => (a.date < b.date ? -1 : 1)).map(k => +k.avg);
+    const lo = Math.min(...ws), hi = Math.max(...ws), span = hi - lo || 1;
+    const spark = ws.length > 1 ? `<svg class="spark" viewBox="0 0 100 34" preserveAspectRatio="none"><polyline points="${ws.map((w, i) => `${(i / (ws.length - 1) * 100).toFixed(1)},${(30 - (w - lo) / span * 26).toFixed(1)}`).join(' ')}"/></svg>` : '';
+    return `<aside class="csum">
+      <button class="link sm back" data-a="go" data-h="#coach">${ic('chevL', 15)} Todos los alumnos</button>
+      <div class="cs-who"><span class="av lg">${esc(ini(p.name))}</span><div><h2>${esc(p.name || 'Nuevo alumno')}</h2><span class="sm mut">${g.n || ''}</span> <span class="badge ${sc}">${stx}</span></div></div>
+      <div class="cs-kc"><span class="eyebrow">Plan diario</span><b>${n0(T.kcal)}<small> kcal</small></b>
+        <div class="mix">${['p', 'c', 'f'].map((k, i) => `<i class="${k}" style="width:${kc[i] / tot * 100}%"></i>`).join('')}</div>
+        <div class="mixl"><span><i class="dot p"></i>${T.p} g prot.</span><span><i class="dot c"></i>${T.c} g carbos</span><span><i class="dot f"></i>${T.f} g grasas</span></div></div>
+      <div class="cs-grid">
+        <div><span class="eyebrow">Peso</span><b>${n1(lc && lc.avg ? lc.avg : p.weight)} kg</b>${p.targetWeight ? `<small>meta ${n1(p.targetWeight)} kg</small>` : ''}</div>
+        <div><span class="eyebrow">Semana</span><b>${ph ? ph.week : '—'}</b>${ph ? `<small>fase ${ph.idx + 1} · ${esc(ph.ph.n)}</small>` : '<small>sin plan enviado</small>'}</div>
+        <div><span class="eyebrow">Adherencia</span><b>${lc && lc.adh != null ? lc.adh + '%' : '—'}</b><small>último check-in</small></div>
+        <div><span class="eyebrow">Check-in</span><b>${lc ? ago(lc.date) : '—'}</b><small>${(cl.checkins || []).length} en total</small></div>
+      </div>
+      ${spark ? `<div class="cs-trend"><span class="eyebrow">Tendencia de peso</span>${spark}<div class="row between sm mut"><span>${n1(ws[0])} kg</span><span>${n1(ws[ws.length - 1])} kg</span></div></div>` : ''}
+      <div class="stack"><button class="btn pri block" data-a="tab" data-t="enviar">${ic('send', 16)} Enviar plan</button>
+        <div class="row gap"><button class="btn ghost grow" data-a="preview">${ic('eye', 16)} Ver como alumno</button>${driveBtn(p.drive)}</div></div>
+    </aside>`;
   }
   function warnBox(cl, all) {
     const W = E.warnings(cl, E.targets(cl)).filter(w => all || w.lv === 'bad');
