@@ -7,7 +7,7 @@
   const later = fn => setTimeout(fn, 0);
 
   /* ── Datos ─────────────────────────────────────────────────────── */
-  function save() { NG.extraFoods = D.customFoods || {}; S.saveCoach(D); }
+  function save() { NG.extraFoods = D.customFoods || {}; S.saveCoach(D); dashSync(); }
   const first = n => String(n || '').trim().split(/\s+/)[0] || '';
   const allergensOf = p => (p.allergens || []).concat((p.medical || []).includes('celiaquia') && !(p.allergens || []).includes('g') ? ['g'] : []);
   function blankProfile() {
@@ -185,6 +185,7 @@
 
   /* ── Render ────────────────────────────────────────────────────── */
   function render() {
+    dashSync();
     const r = cs.route[1];
     const html = r === 'c' ? vClient() : r === 'ajustes' ? vSettings() : vDash();
     U.paint(root, `<div class="wrap coach">${html}</div>`);
@@ -198,14 +199,40 @@
   const driveBtn = (url, label = '📁 Drive') => (url ? `<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : '');
   const lastCheckin = c => (c.checkins || []).reduce((m, x) => (!m || x.date > m.date ? x : m), null);
   // Tablero "Esta semana": todo lo pendiente en un solo lugar, para no tener que acordarse de nada
+  // Lo pendiente de la semana (lo usan el tablero y el dashboard)
+  const recentCheckin = c => { const l = lastCheckin(c); return l && l.date >= S.addDays(S.today(), -6) ? l : null; };
+  function pendings() {
+    const all = Object.values(D.clients), active = all.filter(c => c.plan.sentVersion);
+    return {
+      missing: active.filter(c => (E.weekOf(c.plan.start) || 0) > 1 && !recentCheckin(c)),
+      pain: active.filter(c => (recentCheckin(c) || {}).mo === 1),
+      photos: active.filter(c => E.photoDue(c.plan.start)),
+      unsent: all.filter(c => c.plan.meals.length && (c.plan.dirty || !c.plan.sentVersion)),
+      feedback: active.filter(c => (lastCheckin(c) || {}).date >= S.addDays(S.today(), -2)),
+    };
+  }
+  // Manda los pendientes al dashboard de esta PC (si está activado en Ajustes). Si no responde, no pasa nada.
+  let dashTimer, dashState = '';
+  function dashSync() {
+    if (!D.settings.dashSync) return;
+    clearTimeout(dashTimer);
+    dashTimer = setTimeout(() => {
+      const P = pendings(), real = c => !c.demo, item = (c, detail) => ({ id: c.id, name: c.profile.name || 'Sin nombre', url: c.profile.drive || '', detail: detail || '' });
+      const body = { panelUrl: location.href.replace(/#.*$/, '') + '#coach', backupDays: D.lastBackup ? Math.floor((Date.now() - D.lastBackup) / 864e5) : null,
+        clients: Object.values(D.clients).filter(c => real(c) && c.plan.sentVersion).map(c => item(c)) };
+      for (const k in P) body[k] = P[k].filter(real).map(c => item(c, k === 'pain' ? recentCheckin(c).md : ''));
+      fetch('http://127.0.0.1:3000/api/coaching/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(r => { dashState = r.ok ? '✅ Conectado · último envío ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '⚠️ El dashboard respondió con un error'; })
+        .catch(() => { dashState = '⚠️ No se encontró el dashboard en esta PC (¿está prendido?)'; });
+    }, 1500);
+  }
   function weekBoard() {
-    const today = S.today(), active = Object.values(D.clients).filter(c => c.plan.sentVersion);
-    const recent = c => { const l = lastCheckin(c); return l && l.date >= S.addDays(today, -6) ? l : null; };
+    const today = S.today(), P = pendings(), recent = recentCheckin;
     const blocks = [
-      ['📋', 'Check-ins que faltan', active.filter(c => (E.weekOf(c.plan.start) || 0) > 1 && !recent(c)), c => `<button class="btn wa sm" data-a="remind" data-id="${c.id}">Recordar</button>`],
-      ['🤕', 'Reportaron molestias', active.filter(c => (recent(c) || {}).mo === 1), c => `<span class="sm mut">${esc(recent(c).md || '')}</span>`],
-      ['📸', 'Tocan fotos esta semana', active.filter(c => E.photoDue(c.plan.start)), c => driveBtn(c.profile.drive) || '<span class="sm mut">cargá su carpeta de Drive</span>'],
-      ['📤', 'Planes con cambios sin enviar', Object.values(D.clients).filter(c => c.plan.meals.length && (c.plan.dirty || !c.plan.sentVersion)), c => `<button class="btn ghost sm" data-a="go" data-h="#coach/c/${c.id}/enviar">Enviar</button>`],
+      ['📋', 'Check-ins que faltan', P.missing, c => `<button class="btn wa sm" data-a="remind" data-id="${c.id}">Recordar</button>`],
+      ['🤕', 'Reportaron molestias', P.pain, c => `<span class="sm mut">${esc(recent(c).md || '')}</span>`],
+      ['📸', 'Tocan fotos esta semana', P.photos, c => driveBtn(c.profile.drive) || '<span class="sm mut">cargá su carpeta de Drive</span>'],
+      ['📤', 'Planes con cambios sin enviar', P.unsent, c => `<button class="btn ghost sm" data-a="go" data-h="#coach/c/${c.id}/enviar">Enviar</button>`],
     ].filter(b => b[2].length);
     if (!Object.keys(D.clients).length) return '';
     return `<section class="card wboard"><div class="row between"><h3>🗓️ Esta semana</h3><span class="sm mut">${fdate(today, true)}</span></div>
@@ -536,6 +563,10 @@
         <p class="sm mut">Dirección actual: ${esc(location.href.replace(/#.*$/, ''))}</p></section>
       <section class="card"><h3>📁 Google Drive</h3>
         ${sf('Carpeta de alumnos (link)', 'driveUrl', { type: 'url', ph: 'https://drive.google.com/drive/folders/…', hint: 'El link de 01_COACHING → 02_ALUMNOS. Aparece como botón 📁 arriba en tu panel.' })}</section>
+      <section class="card"><h3>🖥️ Dashboard de esta PC</h3>
+        <label class="row gap"><input type="checkbox" data-s="dashSync" ${s.dashSync ? 'checked' : ''}> <span>Conectar con mi dashboard</span></label>
+        <p class="sm mut">Manda los pendientes (check-ins, molestias, fotos, planes) a tu dashboard y a tus tareas de Notion. Solo funciona en la PC donde corre el dashboard; si el navegador pide permiso para acceder a la red local, tocá «Permitir».</p>
+        ${s.dashSync && dashState ? `<p class="sm">${dashState}</p>` : ''}</section>
       <section class="card"><h3>💾 Respaldo de datos</h3>
         <p class="sm">Todo se guarda en este dispositivo. Los viernes descargá el respaldo y guardalo en Drive → 01_COACHING → 04_RESPALDOS APP.</p>
         <p class="sm mut">Último respaldo: ${D.lastBackup ? new Date(D.lastBackup).toLocaleString('es-AR') : 'nunca'}</p>
@@ -792,7 +823,7 @@
 
   function change(el) {
     if (el.dataset.s) {
-      let v = el.value.trim(); if (el.dataset.s === 'whatsapp') v = U.phone(v);
+      let v = el.type === 'checkbox' ? el.checked : el.value.trim(); if (el.dataset.s === 'whatsapp') v = U.phone(v);
       D.settings[el.dataset.s] = v; if (el.dataset.s === 'accent') U.accent(v);
       save(); return later(render);
     }
