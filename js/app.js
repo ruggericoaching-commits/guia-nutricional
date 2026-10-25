@@ -2,7 +2,7 @@
 (function (NG) {
   // Rutas: #p=… (plan del alumno) · #form=… (formulario) · #coach/… (panel) · vacío (app del alumno)
   function route() {
-    NG.UI.closeAll();
+    NG.UI.closeAll(); NG.UI.enter();
     const h = location.hash || '';
     if (h.startsWith('#p=')) return NG.Client.fromHash(h.slice(3));
     if (h.startsWith('#form')) return NG.Form.mount(h.startsWith('#form=') ? h.slice(6) : '');

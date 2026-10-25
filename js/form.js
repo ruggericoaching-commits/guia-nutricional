@@ -21,7 +21,6 @@
     if (code) { try { co = await S.unpack(code); } catch (e) { co = {}; } }
     const draft = S.read(KD);
     st = { co, step: draft && draft.step ? draft.step : 0, p: Object.assign(blank(), draft && draft.p), sent: false };
-    U.accent(co.a);
     NG.handlers = { click, change, input: () => {} };
     document.title = 'Formulario inicial' + (co.b ? ' · ' + co.b : '');
     render();

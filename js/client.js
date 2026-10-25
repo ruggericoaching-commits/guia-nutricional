@@ -106,7 +106,6 @@
     st.data.logs = st.data.logs || {}; st.data.weights = st.data.weights || []; st.data.checks = st.data.checks || []; st.data.shop = st.data.shop || {}; st.data.ui = st.data.ui || {};
     NG.extraFoods = foodsFromPlan(data.plan);
     if (!data.plan.r) data.plan.r = planRecs(data.plan);
-    U.accent((data.plan.co || {}).a);
     if (!o.preview) U.theme(st.data.ui.theme);
     NG.handlers = { click, input, change };
     document.title = ((data.plan.co || {}).b || 'Guía Nutricional');
@@ -185,7 +184,7 @@
     const tip = tips.length ? tips[(Math.floor(Date.now() / 864e5)) % tips.length] : null;
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.navigator.standalone;
     const g = glasses(), w = L.w || 0, ph = phase(), fl = freePerWeek() ? freeLeft(d) : 0;
-    return `${hero(`${hi},${esc(P.cl.n || '')} 👋`, fdate(d, true), ring(pct, { size: 76, label: `${done}/${ms.length}`, sub: 'comidas', color: 'var(--onacc)' }))}
+    return `${hero(`${hi}, ${esc(P.cl.n || '')} 👋`, fdate(d, true), ring(pct, { size: 76, label: `${done}/${ms.length}`, sub: 'comidas', color: 'var(--onacc)' }))}
       <div class="daynav"><button class="ib" data-a="day" data-d="-1">${ic('chevL')}</button>
         <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
@@ -508,7 +507,7 @@
   async function click(a, el) {
     const ds = el.dataset;
     switch (a) {
-      case 'tab': st.tab = ds.t; window.scrollTo(0, 0); return render();
+      case 'tab': st.tab = ds.t; window.scrollTo(0, 0); U.enter(); return render();
       case 'day': { const nd = S.addDays(st.day, +ds.d); if (nd <= S.today()) st.day = nd; return render(); }
       case 'mcheck': {
         const L = log(st.day);

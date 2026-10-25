@@ -80,7 +80,7 @@
     const pr = Object.assign({}, cl.profile); delete pr.notes; delete pr.meals;
     return {
       v: 1, id: cl.id, ver: P.version || 1, ts: Date.now(),
-      co: { n: s.name, b: s.brand, w: U.phone(s.whatsapp), a: s.accent },
+      co: { n: s.name, b: s.brand, w: U.phone(s.whatsapp) },
       cl: { n: first(cl.profile.name), g: cl.profile.goal, d: +cl.profile.diet, al: allergensOf(cl.profile), ex: cl.profile.exclude || [] },
       t: { k: T.kcal, p: T.p, c: T.c, f: T.f, fi: T.fi, w: T.water, wt: T.waterTrain },
       m: P.meals.map(m => ({
@@ -115,7 +115,7 @@
   }
   async function formLink() {
     const s = D.settings;
-    return S.baseUrl(s) + '#form=' + (await S.pack({ n: s.name, b: s.brand, w: U.phone(s.whatsapp), a: s.accent }));
+    return S.baseUrl(s) + '#form=' + (await S.pack({ n: s.name, b: s.brand, w: U.phone(s.whatsapp) }));
   }
 
   /* ── Montaje y acceso ──────────────────────────────────────────── */
@@ -129,7 +129,6 @@
     if (!D) return vSetup();
     D.customFoods = D.customFoods || {}; D.clients = D.clients || {};
     NG.extraFoods = D.customFoods;
-    U.accent(D.settings.accent);
     if (D.settings.pin && sessionStorage.getItem('ng_unlock') !== D.settings.pin) return vLock();
     S.persist();
     if (parts[1] === 'pv' && D.clients[parts[2]]) {
@@ -150,7 +149,7 @@
         if (pin && !/^\d{4,8}$/.test(pin)) return U.toast('El PIN debe tener de 4 a 8 números');
         if (pin !== pin2) return U.toast('Los PIN no coinciden');
         const hp = pin ? await S.sha(pin) : '';
-        D = { v: 1, settings: { name: v('su-name'), brand: v('su-brand') || v('su-name'), whatsapp: U.phone(v('su-wa')), accent: document.getElementById('su-acc').value, pin: hp, appUrl: '' }, clients: {}, customFoods: {}, lastBackup: 0 };
+        D = { v: 1, settings: { name: v('su-name'), brand: v('su-brand') || v('su-name'), whatsapp: U.phone(v('su-wa')), pin: hp, appUrl: '' }, clients: {}, customFoods: {}, lastBackup: 0 };
         S.saveCoach(D); if (hp) sessionStorage.setItem('ng_unlock', hp);
         U.toast('🎉 ¡Panel listo!'); mount(['coach']);
       },
@@ -161,7 +160,6 @@
         <label class="fld"><span>Tu nombre *</span><input id="su-name" value="Valentino Ruggeri"></label>
         <label class="fld"><span>Nombre de tu marca</span><input id="su-brand" value="Ruggeri Coaching"></label>
         <label class="fld"><span>Tu WhatsApp</span><input id="su-wa" inputmode="tel" placeholder="Ej: 5491122334455"><small class="mut">Formato internacional (54 9 + código de área + número). Ahí te llegan los formularios y check-ins de tus alumnos.</small></label>
-        <label class="fld"><span>Color de tu marca</span><input id="su-acc" type="color" value="#22c55e"></label>
         <div class="grid2"><label class="fld"><span>PIN de acceso (4 a 8 números)</span><input id="su-pin" type="password" inputmode="numeric" placeholder="Recomendado"></label>
         <label class="fld"><span>Repetí el PIN</span><input id="su-pin2" type="password" inputmode="numeric"></label></div>
         <button class="btn pri block big" data-a="setup">Crear mi panel</button>
@@ -222,8 +220,9 @@
         clients: Object.values(D.clients).filter(c => real(c) && c.plan.sentVersion).map(c => item(c)) };
       for (const k in P) body[k] = P[k].filter(real).map(c => item(c, k === 'pain' ? recentCheckin(c).md : ''));
       fetch('http://127.0.0.1:3000/api/coaching/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-        .then(r => { dashState = r.ok ? '✅ Conectado · último envío ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '⚠️ El dashboard respondió con un error'; })
-        .catch(() => { dashState = '⚠️ No se encontró el dashboard en esta PC (¿está prendido?)'; });
+        .then(r => r.ok ? '✅ Conectado · último envío ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '⚠️ El dashboard respondió con un error')
+        .catch(() => '⚠️ No se encontró el dashboard en esta PC (¿está prendido?)')
+        .then(txt => { dashState = txt; const el = document.getElementById('dash-st'); if (el) el.textContent = txt; }); // sin render(): volvería a enviar
     }, 1500);
   }
   function weekBoard() {
@@ -556,8 +555,7 @@
     return `<header class="chead"><button class="ib" data-a="go" data-h="#coach">${ic('chevL', 22)}</button><div class="grow"><h1>Ajustes</h1></div></header>
       <div class="cols">
       <section class="card"><h3>🏷️ Tu marca</h3>${sf('Tu nombre', 'name')}${sf('Marca', 'brand')}
-        ${sf('Tu WhatsApp', 'whatsapp', { ph: '5491122334455', hint: 'Formato internacional (54 9 + área + número). Ahí llegan formularios y check-ins.' })}
-        <label class="fld"><span>Color</span><div class="row gap"><input type="color" data-s="accent" value="${esc(s.accent || '#22c55e')}">${['#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#eab308'].map(c => `<button class="swatch" style="background:${c}" data-a="acc" data-v="${c}" aria-label="${c}"></button>`).join('')}</div></label></section>
+        ${sf('Tu WhatsApp', 'whatsapp', { ph: '5491122334455', hint: 'Formato internacional (54 9 + área + número). Ahí llegan formularios y check-ins.' })}</section>
       <section class="card"><h3>🌐 Dirección pública de la app</h3>
         ${sf('URL donde publicaste la app', 'appUrl', { type: 'url', ph: 'https://tuusuario.github.io/guia/', hint: 'Los links de planes y formularios usan esta dirección. Si la dejás vacía se usa la dirección actual.' })}
         <p class="sm mut">Dirección actual: ${esc(location.href.replace(/#.*$/, ''))}</p></section>
@@ -566,7 +564,7 @@
       <section class="card"><h3>🖥️ Dashboard de esta PC</h3>
         <label class="row gap"><input type="checkbox" data-s="dashSync" ${s.dashSync ? 'checked' : ''}> <span>Conectar con mi dashboard</span></label>
         <p class="sm mut">Manda los pendientes (check-ins, molestias, fotos, planes) a tu dashboard y a tus tareas de Notion. Solo funciona en la PC donde corre el dashboard; si el navegador pide permiso para acceder a la red local, tocá «Permitir».</p>
-        ${s.dashSync && dashState ? `<p class="sm">${dashState}</p>` : ''}</section>
+        <p class="sm" id="dash-st">${s.dashSync ? dashState : ''}</p></section>
       <section class="card"><h3>💾 Respaldo de datos</h3>
         <p class="sm">Todo se guarda en este dispositivo. Los viernes descargá el respaldo y guardalo en Drive → 01_COACHING → 04_RESPALDOS APP.</p>
         <p class="sm mut">Último respaldo: ${D.lastBackup ? new Date(D.lastBackup).toLocaleString('es-AR') : 'nunca'}</p>
@@ -671,7 +669,7 @@
       case 'go': location.hash = ds.h; return;
       case 'lock': sessionStorage.removeItem('ng_unlock'); return mount(cs.route);
       case 'open': cs.tab = 'perfil'; location.hash = '#coach/c/' + ds.id; return;
-      case 'tab': cs.tab = ds.t; history.replaceState(null, '', '#coach/c/' + cl.id + '/' + ds.t); cs.route[3] = ds.t; window.scrollTo(0, 0); return render();
+      case 'tab': cs.tab = ds.t; history.replaceState(null, '', '#coach/c/' + cl.id + '/' + ds.t); cs.route[3] = ds.t; window.scrollTo(0, 0); U.enter(); return render();
       case 'newc': { const c = newClient(); D.clients[c.id] = c; save(); cs.tab = 'perfil'; location.hash = '#coach/c/' + c.id; return; }
       case 'paste': return openPaste();
       case 'pastedo': return doPaste(document.getElementById('paste-t').value || '');
@@ -706,7 +704,6 @@
         if (a1 !== a2) return U.toast('Los PIN no coinciden');
         D.settings.pin = a1 ? await S.sha(a1) : ''; sessionStorage.setItem('ng_unlock', D.settings.pin); save(); return U.toast(a1 ? '🔒 PIN actualizado' : 'PIN desactivado');
       }
-      case 'acc': D.settings.accent = ds.v; U.accent(ds.v); save(); return render();
       case 'wipe':
         if (await U.confirm('Se borran TODOS los alumnos y ajustes de este dispositivo. Hacé un respaldo antes.', { yes: 'Borrar todo', danger: true })
           && await U.confirm('¿Seguro? Esta acción no se puede deshacer.', { yes: 'Sí, borrar', danger: true })) { localStorage.removeItem('ng_coach_v1'); sessionStorage.removeItem('ng_unlock'); D = null; mount(['coach']); }
@@ -824,7 +821,7 @@
   function change(el) {
     if (el.dataset.s) {
       let v = el.type === 'checkbox' ? el.checked : el.value.trim(); if (el.dataset.s === 'whatsapp') v = U.phone(v);
-      D.settings[el.dataset.s] = v; if (el.dataset.s === 'accent') U.accent(v);
+      D.settings[el.dataset.s] = v;
       save(); return later(render);
     }
     const b = el.dataset.b; if (!b) return;

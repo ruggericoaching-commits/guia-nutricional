@@ -141,24 +141,19 @@
     window.scrollTo(0, sy);
   }
 
-  // Color de acento de la marca del entrenador
-  function accent(hex) {
-    if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return;
-    const r = document.documentElement.style;
-    r.setProperty('--acc', hex);
-    const n = parseInt(hex.slice(1), 16);
-    const dk = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * 0.72));
-    r.setProperty('--acc2', `rgb(${dk.join(',')})`);
-    const lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
-    r.setProperty('--onacc', lum > 0.62 ? '#0b1020' : '#ffffff');
-    const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = hex;
+  // Entrada suave al cambiar de pantalla (no en cada repintado: eso pasa mientras se escribe)
+  let enterT;
+  function enter() {
+    const a = document.getElementById('app'); if (!a) return;
+    a.classList.remove('enter'); void a.offsetWidth; a.classList.add('enter');
+    clearTimeout(enterT); enterT = setTimeout(() => a.classList.remove('enter'), 700);
   }
   function theme(t) {
     const h = document.documentElement;
     if (t === 'light' || t === 'dark') h.dataset.theme = t; else delete h.dataset.theme;
   }
 
-  NG.UI = { $, esc, n0, n1, ic, ring, bar, pills, qty, frac, fdate, open, update, close, closeAll, isOpen, confirm, toast, copy, wa, phone, share, paint, accent, theme };
+  NG.UI = { $, esc, n0, n1, ic, ring, bar, pills, qty, frac, fdate, open, update, close, closeAll, isOpen, confirm, toast, copy, wa, phone, share, paint, enter, theme };
 
   document.addEventListener('click', e => { const b = e.target.closest('[data-ui=close]'); if (b) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && stack.length && !stack[stack.length - 1].o.noClose) close(); });
