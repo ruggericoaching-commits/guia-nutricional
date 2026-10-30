@@ -46,8 +46,8 @@
     { id: 'yog_deslac', s: 'dm', pre: 1, n: 'Yogur deslactosado con avena y banana + tostadas de arroz con jamón', it: [['yogdeslac', 200], ['avena', 30], ['banana', 60], ['tostarroz', 18], ['jamon', 60]] },
     // Desayunos y meriendas de todos los días en Argentina (pop = familiar · eco = económico)
     { id: 'mate_tost_qb', s: 'dm', pop: 1, eco: 1, pre: 1, n: 'Mate + tostadas de pan francés con queso blanco y mermelada', it: [['pan', 60], ['quesoblanco', 40], ['mermelada', 15, 1], ['cafe', 250, 1]] },
-    { id: 'cafe_tost_jq', s: 'dm', pop: 1, eco: 1, n: 'Café con leche + tostadas con jamón y queso', it: [['lechedesc', 200, 1], ['cafe', 100, 1], ['pan', 60], ['jamon', 40], ['quesomaquina', 20]] },
-    { id: 'tostado_casero', s: 'dm', pop: 1, eco: 1, n: 'Tostado casero de jamón y queso + café con leche', it: [['panlactal', 50], ['jamon', 40], ['quesomaquina', 20], ['lechedesc', 200, 1], ['cafe', 100, 1]] },
+    { id: 'cafe_tost_jq', fam: 'cafetost', s: 'dm', pop: 1, eco: 1, n: 'Café con leche + tostadas con jamón y queso', it: [['lechedesc', 200, 1], ['cafe', 100, 1], ['pan', 60], ['jamon', 40], ['quesomaquina', 20]] },
+    { id: 'tostado_casero', fam: 'cafetost', s: 'dm', pop: 1, eco: 1, n: 'Tostado casero de jamón y queso + café con leche', it: [['panlactal', 50], ['jamon', 40], ['quesomaquina', 20], ['lechedesc', 200, 1], ['cafe', 100, 1]] },
     { id: 'licuado_banana_tost', s: 'dm', pop: 1, eco: 1, pre: 1, n: 'Licuado de banana con leche + tostada con queso blanco', it: [['lechedesc', 250], ['banana', 120], ['pan', 40], ['quesoblanco', 40]] },
     { id: 'huevos_tost', s: 'dm', pop: 1, eco: 1, n: 'Huevos revueltos con tostadas + una fruta', it: [['huevo', 100], ['pan', 60], ['naranja', 150]] },
     { id: 'avena_leche', s: 'dm', pop: 1, eco: 1, pre: 1, n: 'Avena con leche, banana y canela', it: [['lechedesc', 250], ['avena', 40], ['banana', 60]] },
@@ -55,7 +55,9 @@
     { id: 'mate_galletas_qyd', s: 'dm', pop: 1, eco: 1, n: 'Mate + galletitas de agua con queso cremoso y dulce de membrillo', it: [['cafe', 250, 1], ['galletas', 30], ['quesocremoso', 30], ['membrillo', 20, 1]] },
     { id: 'tost_mm_palta', s: 'dm', n: 'Tostadas de masa madre con palta y huevo', it: [['panmm', 80], ['palta', 50], ['huevo', 100]] },
     { id: 'yog_rojos_nueces', s: 'dm', pre: 1, n: 'Yogur griego con frutos rojos, nueces y miel', it: [['yogriego', 200], ['frutosrojos', 100], ['nueces', 15], ['miel', 7, 1]] },
-    { id: 'cafe_tostado', s: 'dm', buy: 1, n: 'Cafetería: café con leche + tostado de jamón y queso', it: [['lechedesc', 250, 1], ['cafe', 100, 1], ['tostado', 130]] },
+    { id: 'cafe_tostado', fam: 'cafetost', s: 'dm', buy: 1, n: 'Cafetería: café con leche + tostado de jamón y queso', it: [['lechedesc', 250, 1], ['cafe', 100, 1], ['tostado', 130]] },
+    { id: 'miga_yog', s: 'dm', buy: 1, pop: 1, n: 'Sándwiches de miga de jamón y queso + yogur bebible', it: [['sandmiga', 100], ['yogbebible', 200]] },
+    { id: 'yog_granola', s: 'dm', buy: 1, pre: 1, n: 'Yogur griego con granola y manzana', it: [['yogriego', 170], ['granola', 30], ['manzana', 150]] },
     { id: 'kiosco_yog', s: 'dm', buy: 1, pre: 1, n: 'Kiosco o súper: yogur proteico + banana + barrita', it: [['yogprot', 160], ['banana', 120], ['barracereal', 23]] },
 
     // Almuerzos / cenas — comida casera argentina

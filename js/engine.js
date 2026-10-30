@@ -284,9 +284,10 @@
       if (d0.k > 0 && t.k > 0) s += 2 * Math.min(1, (d0.p / d0.k) / (t.p / t.k || 1));
       return { cb, s };
     }).sort((a, b) => b.s - a.s);
-    const out = [], mains = new Set();
-    for (const { cb } of scored) { if (out.length >= n) break; if (!mains.has(cb.it[0][0])) { out.push(cb); mains.add(cb.it[0][0]); } }
-    for (const { cb } of scored) { if (out.length >= n) break; if (!out.includes(cb)) out.push(cb); }
+    // Platos de la misma familia (ej.: café con leche + tostado) no se repiten en una misma comida
+    const out = [], mains = new Set(), fams = new Set(), fresh = cb => !cb.fam || !fams.has(cb.fam), take = cb => { out.push(cb); if (cb.fam) fams.add(cb.fam); };
+    for (const { cb } of scored) { if (out.length >= n) break; if (!mains.has(cb.it[0][0]) && fresh(cb)) { take(cb); mains.add(cb.it[0][0]); } }
+    for (const { cb } of scored) { if (out.length >= n) break; if (!out.includes(cb) && fresh(cb)) take(cb); }
     return out;
   }
 
@@ -337,8 +338,7 @@
 
   function buildOptions(m, p, used, rnd, n = 3) {
     const lv = cookLevel(p, m.ctx), opts = [];
-    if (lv < 0) opts.push(flexOption(m));
-    pickCombos(m, p, used, rnd, lv < 0 ? n - 1 : n).forEach(cb => { used.add(cb.id); opts.push(comboToOption(cb, m, p)); });
+    pickCombos(m, p, used, rnd, n).forEach(cb => { used.add(cb.id); opts.push(comboToOption(cb, m, p)); });
     if (!opts.length) opts.push(flexOption(m));
     return opts;
   }

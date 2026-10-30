@@ -28,7 +28,7 @@
   const phase = () => (PL().ph ? E.phaseOf(PL().ph, S.today()) : null);
   const habitList = () => (phase() ? phase().ph.habits : HABITS);
   const freePerWeek = () => +(PL().fr || 0);
-  const nm = o => o.n.split(/:s*/)[0];
+  const nm = o => { const [a, ...b] = o.n.split(/:\s*/), s = b.length ? b.join(': ') : a; return s.charAt(0).toUpperCase() + s.slice(1); };
   const countFree = L => Object.values((L && L.m) || {}).filter(v => v === -3).length;
   function freeLeft(d) {
     const mon = S.addDays(d, -((new Date(d + 'T12:00:00').getDay() + 6) % 7));
@@ -229,7 +229,7 @@
         <div class="row between"><h3>Comidas</h3><span class="mut sm">${done}/${ms.length}</span></div>
         <div class="tl">${ms.map(m => {
           const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
-          const lbl = v == null ? '' : v === -1 ? '🧭 Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? '🍕 Comida libre' : v === -4 ? ((peek(d).c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? o.n : '');
+          const lbl = v == null ? '' : v === -1 ? '🧭 Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? '🍕 Comida libre' : v === -4 ? ((peek(d).c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? nm(o) : '');
           return `<div class="tli ${v == null ? '' : v === -2 ? 'off' : v === -3 ? 'done free' : 'done'}">
             <button class="tck" data-a="mcheck" data-m="${m.i}" aria-label="Marcar">${v == null ? '' : v === -2 ? '–' : v === -3 ? '🍕' : ic('check', 18)}</button>
             <div class="tlb" data-a="mopen" data-m="${m.i}"><div class="row between"><b>${(NG.MEAL_TYPES[m.y] || {}).e || '🍽️'} ${esc(m.n)}</b><span class="mut sm">${esc(m.h || '')}</span></div>
@@ -296,7 +296,7 @@
             <span class="mk">${n0(m.t[0])}<small>kcal</small></span>${ic(open ? 'chevU' : 'chevD', 18)}</button>
           ${open ? `<div class="meal-b">
             ${pills(tgt(m), { sm: true })}
-            ${m.o.length > 1 ? `<div class="seg rc">${m.o.map((x, i) => `<button class="${i === sel ? 'on' : ''}" data-a="opt" data-m="${m.i}" data-o="${i}">${esc(nm(x))}</button>`).join('')}</div>` : ''}
+            ${m.o.length > 1 ? `<div class="seg rc">${m.o.map((x, i) => (x.y && m.o.some(z => !z.y) ? '' : `<button class="${i === sel ? 'on' : ''}" data-a="opt" data-m="${m.i}" data-o="${i}">${esc(nm(x))}</button>`)).join('')}</div>` : ''}
             <button class="btn ghost sm cb-btn" data-a="cbopen" data-m="${m.i}">${ic('plus', 14)} Comí otra cosa</button>
             ${o ? `${m.o.length === 1 ? `<h4 class="oname">${o.y ? '🧭 ' : ''}${esc(o.n)}</h4>` : ''}${optionBody(m, o)}` : ''}
             ${m.no ? `<div class="note">📝 ${esc(m.no)}</div>` : ''}
@@ -409,7 +409,7 @@
     const cur = peek(st.day).m[m.i], alt = (o, n, extra = '') => `<button class="chip ${cur === o ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${o}" ${extra}>${n}</button>`;
     U.open(`<h3>${esc(m.n)}</h3><p class="mut sm">¿Qué comiste?</p>
       <div class="pick">${m.o.map((o, i) => {
-        const [t, ...d] = o.n.split(/:\s*/), k = o.y ? m.t[0] : E.sum(items(o)).k;
+        const t = nm(o), d = [], k = o.y ? m.t[0] : E.sum(items(o)).k;
         return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}"><span class="pk-l">${o.y ? '🧭' : ((NG.food((items(o)[0] || {}).f) || {}).e || '🍽️')}</span>
           <span class="pk-t"><b>${esc(t)}</b>${d.length ? `<small>${esc(d.join(': '))}</small>` : ''}</span><span class="pk-k">${n0(k)}<small>kcal</small></span></button>`;
       }).join('')}</div>
