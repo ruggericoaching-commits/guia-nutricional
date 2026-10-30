@@ -385,7 +385,7 @@
       <div class="pick">${m.o.map((o, i) => {
         if (o.y && m.o.some(z => !z.y)) return '';
         const t = nm(o), d = [], k = o.y ? m.t[0] : E.sum(items(o)).k;
-        return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}">
+        return `<button class="pk ${cur === i ? 'on' : ''}" data-a="${o.y ? 'mset' : 'mdet'}" data-m="${m.i}" data-o="${i}">
           <span class="pk-t"><b>${esc(t)}</b>${d.length ? `<small>${esc(d.join(': '))}</small>` : ''}</span><span class="pk-k">${n0(k)}<small>kcal</small></span></button>`;
       }).join('')}</div>
       <div class="pk-alt">${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
@@ -404,7 +404,9 @@
   }
   function cbBody() {
     const cb = st.cb, tot = E.sum(cb.items), m = meals().find(x => x.i === cb.m);
-    return `<h3>${esc(m.n)} · lo que comí</h3>
+    const op = cb.o != null ? m.o[cb.o] : null;
+    return `<h3>${op ? esc(nm(op)) : esc(m.n) + ' · lo que comí'}</h3>
+      ${op ? '<p class="mut sm">Cambiá los gramos o los alimentos según lo que tengas.</p>' : ''}
       <div class="cb-tot"><b>${n0(tot.k)}<small> kcal</small></b><span>P ${n0(tot.p)} · C ${n0(tot.c)} · G ${n0(tot.f)}</span></div>
       <div class="items cb-items">${cb.items.map((it, i) => { const f = NG.food(it.f); return `<div class="it static"><span class="it-e">${f.e}</span><span class="it-n">${esc(f.n)}</span>
         <span class="cb-q"><button data-a="cbg" data-i="${i}" data-d="-${f.st || 10}" aria-label="Menos">−</button><b>${it.g} ${f.ml ? 'ml' : 'g'}</b><button data-a="cbg" data-i="${i}" data-d="${f.st || 10}" aria-label="Más">+</button></span>
@@ -412,8 +414,8 @@
       <input type="search" class="search block" placeholder="Buscar alimento…" data-live="cbq" value="${esc(cb.q)}">
       <div class="chips sm cb-grp">${[['', 'Todos']].concat(Object.entries(NG.GRUPOS).map(([k, g]) => [k, g.e + ' ' + g.n])).map(([k, n]) => `<button class="chip ${cb.g === k ? 'on' : ''}" data-a="cbgrp" data-v="${k}">${n}</button>`).join('')}</div>
       <div class="items cb-list" id="cb-list">${cbList()}</div>
-      <input class="search block" placeholder="Nombre, si la querés guardar" data-live="cbn" value="${esc(cb.n || '')}">
-      <div class="row gap"><button class="btn ghost" data-a="cbsave" ${cb.items.length ? '' : 'disabled'}>Solo hoy</button><button class="btn pri" data-a="cbsave" data-k="my" ${cb.items.length ? '' : 'disabled'}>Guardar en mis comidas</button></div>`;
+      ${op ? `<button class="btn pri block" data-a="cbsave" data-k="opt" ${cb.items.length ? '' : 'disabled'}>Registrar</button>` : `<input class="search block" placeholder="Nombre, si la querés guardar" data-live="cbn" value="${esc(cb.n || '')}">
+      <div class="row gap"><button class="btn ghost" data-a="cbsave" ${cb.items.length ? '' : 'disabled'}>Solo hoy</button><button class="btn pri" data-a="cbsave" data-k="my" ${cb.items.length ? '' : 'disabled'}>Guardar en mis comidas</button></div>`}`;
   }
   function sheetCb(mid) {
     const prev = (peek(st.day).c || {})[mid];
@@ -555,13 +557,15 @@
       }
       case 'free': return sheetFree();
       case 'cbopen': return sheetCb(ds.m);
+      case 'mdet': { const m = meals().find(x => x.i === ds.m), o = m && m.o[+ds.o]; if (!o) return; st.cb = { m: ds.m, o: +ds.o, base: JSON.stringify(items(o)), items: items(o), q: '', g: '', n: '' }; U.close(); return U.open(cbBody(), { wide: true }); }
       case 'cbadd': { const f = NG.food(ds.f); if (f) st.cb.items.push({ f: f.id, g: defG(f) }); st.cb.q = ''; return U.update(cbBody()); }
       case 'cbdel': st.cb.items.splice(+ds.i, 1); return U.update(cbBody());
       case 'cbg': { const it = st.cb.items[+ds.i], f = NG.food(it.f); it.g = Math.max(f.st || 10, Math.min(+f.mx || 2000, it.g + +ds.d)); return U.update(cbBody()); }
       case 'cbgrp': st.cb.g = ds.v; return U.update(cbBody());
       case 'cbsave': {
         if (ds.k === 'my') st.data.my.push({ n: (st.cb.n || '').trim().slice(0, 40) || st.cb.items.slice(0, 2).map(i => NG.food(i.f).n).join(' + '), items: st.cb.items.map(i => ({ ...i })) });
-        const L = log(st.day); L.c = L.c || {}; L.c[st.cb.m] = st.cb.items; L.m[st.cb.m] = -4; save(); U.close();
+        const L = log(st.day); L.c = L.c || {};
+        if (ds.k === 'opt' && JSON.stringify(st.cb.items) === st.cb.base) { L.m[st.cb.m] = st.cb.o; delete L.c[st.cb.m]; } else { L.c[st.cb.m] = st.cb.items; L.m[st.cb.m] = -4; } save(); U.close();
         if (doneCount(st.day) === meals().length) U.toast('🎉 ¡Día completo! Excelente trabajo'); else U.toast('Comida guardada');
         return render();
       }
