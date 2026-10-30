@@ -741,3 +741,5 @@ summary:hover { opacity: .75; }
 .rec-h { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
 .rec-h b { flex: 1; font-weight: 600; }
 .rec-b { margin: 0 0 10px 34px; color: var(--mut); }
+.pk:has(.ib) { grid-template-columns: minmax(0, 1fr) auto auto; }
+button.pk-t { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; }

@@ -125,7 +125,7 @@
     const data = o.preview ? (o.demo ? demoData(o.plan) : { plan: o.plan, logs: {}, weights: [], checks: [], shop: {}, ui: {} }) : S.alumno();
     if (!data || !data.plan) return welcome();
     st = { data, preview: !!o.preview, demo: !!o.demo, onExit: o.onExit, tab: st && !o.preview && st.tab ? st.tab : 'hoy', day: S.today(), open: {}, sel: {}, place: -1, hm: null };
-    st.data.logs = st.data.logs || {}; st.data.weights = st.data.weights || []; st.data.checks = st.data.checks || []; st.data.shop = st.data.shop || {}; st.data.ui = st.data.ui || {};
+    st.data.logs = st.data.logs || {}; st.data.weights = st.data.weights || []; st.data.checks = st.data.checks || []; st.data.shop = st.data.shop || {}; st.data.ui = st.data.ui || {}; st.data.my = st.data.my || [];
     NG.extraFoods = foodsFromPlan(data.plan);
     if (!data.plan.r) data.plan.r = planRecs(data.plan);
     if (!o.preview) U.theme(st.data.ui.theme);
@@ -212,7 +212,6 @@
         <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
       ${layout([
-        [ph && d === today ? `<button class="card phl t-violet" data-a="tab" data-t="habitos"><b>${ph.ph.e} Fase ${ph.idx + 1} · ${esc(ph.ph.n)}</b>${ic('chevR', 16)}</button>` : '', 'b'],
         [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan las fotos de progreso</b></section>` : '', 'b'],
         [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc row between"><span class="sm">📲 Compartir → <b>Agregar a inicio</b></span><button class="link sm" data-a="iosx">Ok</button></div>` : '', 'b'],
       [`<section class="card t-lime">
@@ -242,7 +241,6 @@
         <div class="glasses">${Array.from({ length: g }, (_, i) => `<button class="gl ${i < w ? 'on' : ''}" data-a="wset" data-n="${i < w && i === w - 1 ? i : i + 1}" aria-label="Vaso ${i + 1}"></button>`).join('')}</div>
         <div class="row center gap"><button class="btn ghost sm" data-a="water" data-d="-1">− vaso</button><button class="btn pri sm" data-a="water" data-d="1">+ vaso</button></div>
       </section>`, 'b'],
-        [P.ms ? `<section class="card coachmsg t-lime"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
       ])}
       <p class="disc">Guía orientativa: no reemplaza la consulta médica.</p>`;
   }
@@ -293,7 +291,7 @@
           ${open ? `<div class="meal-b">
             ${pills(tgt(m), { sm: true })}
             ${m.o.length > 1 ? `<div class="seg rc">${m.o.map((x, i) => (x.y && m.o.some(z => !z.y) ? '' : `<button class="${i === sel ? 'on' : ''}" data-a="opt" data-m="${m.i}" data-o="${i}">${esc(nm(x))}</button>`)).join('')}</div>` : ''}
-            <button class="btn ghost sm cb-btn" data-a="cbopen" data-m="${m.i}">${ic('plus', 14)} Comí otra cosa</button>
+            <button class="btn ghost sm cb-btn" data-a="cbopen" data-m="${m.i}">${ic('plus', 14)} Agregar comida</button>
             ${o ? `${m.o.length === 1 ? `<h4 class="oname">${o.y ? '🧭 ' : ''}${esc(o.n)}</h4>` : ''}${optionBody(m, o)}` : ''}
             ${m.no ? `<div class="note">📝 ${esc(m.no)}</div>` : ''}
             
@@ -324,15 +322,12 @@
   }
   function vHabitos() {
     const P = PL(), L = peek(S.today()), ph = phase();
-    return `${hero('Hábitos', ph ? `Fase ${ph.idx + 1}: ${ph.ph.n}` : 'Lo que más impacto tiene en tus resultados')}
+    return `${hero('Hábitos', 'Marcá lo que cumpliste hoy')}
       ${layout([
-        [ph ? phaseCard(ph) : '', 'a'],
-        [P.ms ? `<section class="card coachmsg t-lime"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
       [`<section class="card t-mint"><h3>✅ Hoy</h3>
         ${habitList().map(([k, e, n]) => `<button class="hab ${L.h && L.h[k] ? 'on' : ''}" data-a="habit" data-h="${k}"><span class="tck">${L.h && L.h[k] ? ic('check', 16) : ''}</span>${e} ${n}</button>`).join('')}
         <button class="hab ${(L.w || 0) >= glasses() ? 'on' : ''}" data-a="tab" data-t="hoy"><span class="tck">${(L.w || 0) >= glasses() ? ic('check', 16) : ''}</span>💧 Tomé mi agua (${L.w || 0}/${glasses()} vasos)</button>
       </section>`, 'b'],
-            [`<section class="card t-sky recl"><h3>Tus recomendaciones</h3>${(P.r || []).map(([e, t, x], i) => `<button class="rec-h" data-a="rec" data-i="${i}"><span>${e}</span><b>${esc(t)}</b>${ic(st.rec === i ? 'chevU' : 'chevD', 16)}</button>${st.rec === i ? `<p class="sm rec-b">${esc(x)}</p>` : ''}`).join('')}</section>`, 'a'],
       ])}`;
   }
 
@@ -395,7 +390,8 @@
       }).join('')}</div>
       <div class="pk-alt">${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
         ${alt(-2, 'No seguí el plan')}</div>
-      <button class="btn ghost block" data-a="cbopen" data-m="${m.i}">${ic('plus', 15)} ${cur === -4 ? 'Editar lo que comí' : 'Comí otra cosa'}</button>`);
+      ${(st.data.my || []).length ? `<div class="pick">${st.data.my.map((x, i) => `<div class="pk"><button class="pk-t" data-a="myuse" data-m="${m.i}" data-i="${i}"><b>${esc(x.n)}</b></button><span class="pk-k">${n0(E.sum(x.items).k)}<small>kcal</small></span><button class="ib sm" data-a="mydel" data-m="${m.i}" data-i="${i}" aria-label="Borrar">${ic('x', 14)}</button></div>`).join('')}</div>` : ''}
+      <button class="btn ghost block" data-a="cbopen" data-m="${m.i}">${ic('plus', 15)} ${cur === -4 ? 'Editar lo que comí' : 'Agregar comida'}</button>`);
   }
   // Armador de comida propia: cualquier alimento, con sus gramos; suma a los macros del día
   const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -416,11 +412,12 @@
       <input type="search" class="search block" placeholder="Buscar alimento…" data-live="cbq" value="${esc(cb.q)}">
       <div class="chips sm cb-grp">${[['', 'Todos']].concat(Object.entries(NG.GRUPOS).map(([k, g]) => [k, g.e + ' ' + g.n])).map(([k, n]) => `<button class="chip ${cb.g === k ? 'on' : ''}" data-a="cbgrp" data-v="${k}">${n}</button>`).join('')}</div>
       <div class="items cb-list" id="cb-list">${cbList()}</div>
-      <button class="btn pri block" data-a="cbsave" ${cb.items.length ? '' : 'disabled'}>Guardar</button>`;
+      <input class="search block" placeholder="Nombre, si la querés guardar" data-live="cbn" value="${esc(cb.n || '')}">
+      <div class="row gap"><button class="btn ghost" data-a="cbsave" ${cb.items.length ? '' : 'disabled'}>Solo hoy</button><button class="btn pri" data-a="cbsave" data-k="my" ${cb.items.length ? '' : 'disabled'}>Guardar en mis comidas</button></div>`;
   }
   function sheetCb(mid) {
     const prev = (peek(st.day).c || {})[mid];
-    st.cb = { m: mid, items: prev ? prev.map(i => ({ ...i })) : [], q: '', g: '' };
+    st.cb = { m: mid, items: prev ? prev.map(i => ({ ...i })) : [], q: '', g: '', n: '' };
     U.close(); U.open(cbBody(), { wide: true });
   }
   function sheetFree() {
@@ -563,10 +560,13 @@
       case 'cbg': { const it = st.cb.items[+ds.i], f = NG.food(it.f); it.g = Math.max(f.st || 10, Math.min(+f.mx || 2000, it.g + +ds.d)); return U.update(cbBody()); }
       case 'cbgrp': st.cb.g = ds.v; return U.update(cbBody());
       case 'cbsave': {
+        if (ds.k === 'my') st.data.my.push({ n: (st.cb.n || '').trim().slice(0, 40) || st.cb.items.slice(0, 2).map(i => NG.food(i.f).n).join(' + '), items: st.cb.items.map(i => ({ ...i })) });
         const L = log(st.day); L.c = L.c || {}; L.c[st.cb.m] = st.cb.items; L.m[st.cb.m] = -4; save(); U.close();
         if (doneCount(st.day) === meals().length) U.toast('🎉 ¡Día completo! Excelente trabajo'); else U.toast('Comida guardada');
         return render();
       }
+      case 'myuse': { const x = st.data.my[+ds.i]; if (!x) return; const L = log(st.day); L.c = L.c || {}; L.c[ds.m] = x.items.map(i => ({ ...i })); L.m[ds.m] = -4; save(); U.close(); U.toast('Comida guardada'); return render(); }
+      case 'mydel': st.data.my.splice(+ds.i, 1); save(); U.close(); return sheetCheck(ds.m);
       case 'ckset': {
         st.ck[ds.c] = +ds.v;
         el.parentElement.querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b === el));
@@ -635,6 +635,7 @@
     }
   }
   function input(el) {
+    if (el.dataset.live === 'cbn' && st.cb) { st.cb.n = el.value; return; }
     if (el.dataset.live === 'cbq' && st.cb) { st.cb.q = el.value; const l = document.getElementById('cb-list'); if (l) l.innerHTML = cbList(); U.mute(l); return; }
     if (el.dataset.live === 'ck') { st.ck[el.dataset.c] = +el.value; const o = document.getElementById('ckv-' + el.dataset.c); if (o) o.textContent = el.value; }
   }
