@@ -735,3 +735,9 @@ summary:hover { opacity: .75; }
 .cb-btn { margin-top: 10px; }
 .pk { grid-template-columns: minmax(0, 1fr) auto; }
 .pk-t b { white-space: normal; line-height: 1.3; }
+
+.phl { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 18px; text-align: left; color: inherit; font: inherit; }
+.recl h3 { margin-bottom: 4px; }
+.rec-h { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; }
+.rec-h b { flex: 1; font-weight: 600; }
+.rec-b { margin: 0 0 10px 34px; color: var(--mut); }

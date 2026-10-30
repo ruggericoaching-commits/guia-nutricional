@@ -212,11 +212,10 @@
         <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
         <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
       ${layout([
-        [ph && d === today ? phaseCard(ph) : '', 'b'],
-        [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan tus fotos de progreso</b><p class="sm">Frente, perfil y espalda. Subilas a tu Drive, en «03 Fotos de Progreso».</p></section>` : '', 'b'],
-        [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc"><b>📲 Instalala en tu iPhone</b><p class="sm mut">Tocá <b>Compartir</b> ⬆️ y después <b>«Agregar a inicio»</b>.</p><button class="link sm" data-a="iosx">Entendido</button></div>` : '', 'b'],
+        [ph && d === today ? `<button class="card phl t-violet" data-a="tab" data-t="habitos"><b>${ph.ph.e} Fase ${ph.idx + 1} · ${esc(ph.ph.n)}</b>${ic('chevR', 16)}</button>` : '', 'b'],
+        [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan las fotos de progreso</b></section>` : '', 'b'],
+        [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc row between"><span class="sm">📲 Compartir → <b>Agregar a inicio</b></span><button class="link sm" data-a="iosx">Ok</button></div>` : '', 'b'],
       [`<section class="card t-lime">
-        <div class="row between"><h3>Tu día</h3><span class="mut sm">objetivo ${n0(T.k)} kcal</span></div>
         <div class="kc"><b>${n0(tt.k)}</b><span>/ ${n0(T.k)} kcal</span></div>
         ${bar(tt.k, T.k, 'var(--acc)')}
         <div class="mgrid">
@@ -243,7 +242,6 @@
         <div class="glasses">${Array.from({ length: g }, (_, i) => `<button class="gl ${i < w ? 'on' : ''}" data-a="wset" data-n="${i < w && i === w - 1 ? i : i + 1}" aria-label="Vaso ${i + 1}"></button>`).join('')}</div>
         <div class="row center gap"><button class="btn ghost sm" data-a="water" data-d="-1">− vaso</button><button class="btn pri sm" data-a="water" data-d="1">+ vaso</button></div>
       </section>`, 'b'],
-        [tip ? `<section class="card tip t-mint"><div class="tip-e">${tip[0]}</div><div><b>${esc(tip[1])}</b><p class="sm">${esc(tip[2])}</p></div></section>` : '', 'b'],
         [P.ms ? `<section class="card coachmsg t-lime"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
       ])}
       <p class="disc">Guía orientativa: no reemplaza la consulta médica.</p>`;
@@ -282,9 +280,7 @@
         <div class="tg"><b>${n0(T.fi)} g</b><span>🌾 Fibra</span></div>
         <div class="tg"><b>${n1(T.w / 1000)} L</b><span>💧 Agua</span></div>
       </section>`, 'b'],
-      [`<p class="sm mut center">Opciones equivalentes. Tocá un alimento para cambiarlo.</p>`, 'b'],
       [`<details class="card measures t-mint"><summary>📏 ¿No tenés balanza? Medidas caseras</summary>
-        <p class="sm mut">Si no tenés balanza, usá estas medidas.</p>
         <div class="mlist">${NG.MEASURES.map(([e, t, x]) => `<div><span>${e}</span><p class="sm"><b>${esc(t)}:</b> ${esc(x)}</p></div>`).join('')}</div></details>`, 'b'],
       [meals().map(m => {
         const open = openId() === m.i;
@@ -324,22 +320,19 @@
   function phaseCard(ph, full) {
     return `<section class="card phase t-violet"><div class="row between"><b>${ph.ph.e} Fase ${ph.idx + 1} de 3 · ${ph.ph.n}</b><span class="mut sm">${ph.idx < 2 ? `semana ${ph.inPhase} de 2` : `semana ${ph.week}`}</span></div>
       <div class="phbar">${NG.PHASES.map((_, i) => `<i class="${i < ph.idx ? 'done' : i === ph.idx ? 'on' : ''}"></i>`).join('')}</div>
-      <p class="sm"><b>Tu foco:</b> ${esc(ph.ph.focus)}</p>
-      <div class="row between sm mut"><span>Meta: ${ph.ph.goal}% de las comidas</span>${full ? '' : `<button class="link sm" data-a="tab" data-t="habitos">Mis hábitos de la fase ›</button>`}</div>
-      ${full ? `<div class="phases">${NG.PHASES.map((x, i) => `<div class="phs ${i === ph.idx ? 'on' : ''}"><b>${x.e} ${x.n}</b><small>${x.w}</small></div>`).join('')}</div>` : ''}</section>`;
+      <p class="sm">${esc(ph.ph.focus)}</p><div class="sm mut">Meta: ${ph.ph.goal}% de las comidas</div></section>`;
   }
   function vHabitos() {
     const P = PL(), L = peek(S.today()), ph = phase();
     return `${hero('Hábitos', ph ? `Fase ${ph.idx + 1}: ${ph.ph.n}` : 'Lo que más impacto tiene en tus resultados')}
       ${layout([
-        [ph ? phaseCard(ph, true) : '', 'a'],
+        [ph ? phaseCard(ph) : '', 'a'],
         [P.ms ? `<section class="card coachmsg t-lime"><b>💬 Mensaje de ${esc((P.co || {}).n || 'tu entrenador')}</b><p>${esc(P.ms).replace(/\n/g, '<br>')}</p></section>` : '', 'b'],
       [`<section class="card t-mint"><h3>✅ Hoy</h3>
         ${habitList().map(([k, e, n]) => `<button class="hab ${L.h && L.h[k] ? 'on' : ''}" data-a="habit" data-h="${k}"><span class="tck">${L.h && L.h[k] ? ic('check', 16) : ''}</span>${e} ${n}</button>`).join('')}
         <button class="hab ${(L.w || 0) >= glasses() ? 'on' : ''}" data-a="tab" data-t="hoy"><span class="tck">${(L.w || 0) >= glasses() ? ic('check', 16) : ''}</span>💧 Tomé mi agua (${L.w || 0}/${glasses()} vasos)</button>
       </section>`, 'b'],
-      [`<h3 class="sec">💡 Tus recomendaciones</h3>`, 'a'],
-      [`<div class="recs">${(P.r || []).map(([e, t, x]) => `<section class="card rec t-sky"><span class="rec-e">${e}</span><div><b>${esc(t)}</b><p class="sm">${esc(x)}</p></div></section>`).join('')}</div>`, 'a'],
+            [`<section class="card t-sky recl"><h3>Tus recomendaciones</h3>${(P.r || []).map(([e, t, x], i) => `<button class="rec-h" data-a="rec" data-i="${i}"><span>${e}</span><b>${esc(t)}</b>${ic(st.rec === i ? 'chevU' : 'chevD', 16)}</button>${st.rec === i ? `<p class="sm rec-b">${esc(x)}</p>` : ''}`).join('')}</section>`, 'a'],
       ])}`;
   }
 
@@ -587,6 +580,7 @@
       case 'water': { const L = log(st.day); L.w = Math.max(0, Math.min(30, (L.w || 0) + +ds.d)); save(); if (+ds.d > 0 && L.w === glasses()) U.toast('💧 ¡Meta de agua cumplida!'); return render(); }
       case 'wset': { const L = log(st.day); L.w = +ds.n; save(); return render(); }
       case 'habit': { const L = log(S.today()); L.h = L.h || {}; L.h[ds.h] = !L.h[ds.h]; save(); return render(); }
+      case 'rec': st.rec = st.rec === +ds.i ? -1 : +ds.i; return render();
       case 'place': st.place = st.place === +ds.i ? -1 : +ds.i; return render();
       case 'wsave': {
         const kg = parseFloat(String(document.getElementById('wkg').value).replace(',', '.'));
