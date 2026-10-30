@@ -79,7 +79,7 @@
     used.forEach(id => { const f = NG.food(id); if (f && !NG.FOODS[id]) fd[id] = NG.packFood(f); });
     const pr = Object.assign({}, cl.profile); delete pr.notes; delete pr.meals;
     return {
-      v: 1, id: cl.id, ver: P.version || 1, ts: Date.now(),
+      v: 1, id: cl.id, sk: cl.cloudKey || '', ver: P.version || 1, ts: Date.now(),
       co: { n: s.name, b: s.brand, w: U.phone(s.whatsapp) },
       cl: { n: first(cl.profile.name), g: cl.profile.goal, d: +cl.profile.diet, al: allergensOf(cl.profile), ex: cl.profile.exclude || [] },
       t: { k: T.kcal, p: T.p, c: T.c, f: T.f, fi: T.fi, w: T.water, wt: T.waterTrain },
@@ -94,7 +94,7 @@
   }
   function clientFromPayload(pl) {
     const cl = newClient(pl.pr || { name: pl.cl && pl.cl.n });
-    cl.id = pl.id; cl.calc = pl.ca || {};
+    cl.id = pl.id; cl.calc = pl.ca || {}; if (pl.sk) cl.cloudKey = pl.sk;
     cl.plan.meals = (pl.m || []).map(m => ({
       id: m.i, name: m.n, type: m.y, time: m.h, pct: m.p || 20, tag: m.g || 'normal', ctx: m.x || 'casa', note: m.no || '',
       target: { k: m.t[0], p: m.t[1], c: m.t[2], f: m.t[3] },
@@ -105,12 +105,15 @@
     Object.entries(pl.fd || {}).forEach(([id, a]) => { if (/^u_/.test(id) && !D.customFoods[id]) D.customFoods[id] = NG.unpackFood(id, a); });
     return cl;
   }
+  const newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), b => b.toString(36).padStart(2, '0')).join('').slice(0, 32);
   async function makeLink(cl) {
     const P = cl.plan;
+    if (!cl.cloudKey) cl.cloudKey = newKey();
     if (P.dirty || !P.version) { P.version = (P.version || 0) + 1; P.dirty = false; }
     if (!P.start) P.start = S.today(); // fases y fotos se cuentan desde el día que le mandás el primer link
     P.sentVersion = P.version; P.sentAt = Date.now();
     save();
+    cloudStart();
     return S.baseUrl(D.settings) + '#p=' + (await S.pack(payload(cl)));
   }
   async function formLink() {
@@ -131,6 +134,7 @@
     NG.extraFoods = D.customFoods;
     if (D.settings.pin && sessionStorage.getItem('ng_unlock') !== D.settings.pin) return vLock();
     S.persist();
+    cloudStart();
     if (parts[1] === 'pv' && D.clients[parts[2]]) {
       const pc = D.clients[parts[2]];
       return NG.Client.mount({ preview: true, demo: !!pc.demo, plan: payload(pc), onExit: () => { location.hash = '#coach/c/' + parts[2] + '/enviar'; } });
@@ -632,6 +636,10 @@
         <p class="sm mut">Dirección actual: ${esc(location.href.replace(/#.*$/, ''))}</p></section>
       <section class="card"><h3>📁 Google Drive</h3>
         ${sf('Carpeta de alumnos (link)', 'driveUrl', { type: 'url', ph: 'https://drive.google.com/drive/folders/…', hint: 'El link de 01_COACHING → 02_ALUMNOS. Aparece como botón 📁 arriba en tu panel.' })}</section>
+      <section class="card"><h3>☁️ Nube</h3>
+        <p class="sm mut">Los check-ins y formularios de tus alumnos llegan solos. Entrá con tu cuenta de Google.</p>
+        <p class="sm" id="cloud-st">${esc(cloud.msg || (NG.Cloud && NG.Cloud.on() ? '' : 'No configurada'))}</p>
+        <div class="row gap wrapr"><button class="btn pri sm" data-a="cloudin">${cloud.user ? 'Cambiar de cuenta' : 'Entrar con Google'}</button>${cloud.user ? '<button class="btn ghost sm" data-a="cloudout">Salir</button>' : ''}</div></section>
       <section class="card"><h3>🖥️ Dashboard de esta PC</h3>
         <label class="row gap"><input type="checkbox" data-s="dashSync" ${s.dashSync ? 'checked' : ''}> <span>Conectar con mi dashboard</span></label>
         <p class="sm mut">Manda los pendientes (check-ins, molestias, fotos, planes) a tu dashboard y a tus tareas de Notion. Solo funciona en la PC donde corre el dashboard; si el navegador pide permiso para acceder a la red local, tocá «Permitir».</p>
@@ -685,6 +693,43 @@
       <textarea id="paste-t" rows="7" autofocus placeholder="📝 Formulario inicial…  /  📋 Check-in…  /  https://…#p=…"></textarea>
       <button class="btn pri block" data-a="pastedo">Importar</button>`, { wide: true });
   }
+  function addCheckin(cl, d) {
+    cl.checkins = (cl.checkins || []).filter(c => c.date !== d.d);
+    cl.checkins.push({ date: d.d, avg: d.avg, prev: d.prev, adh: d.adh, done: d.done, tot: d.tot, lib: d.lib, w: d.w,
+      tr: d.tr, tp: d.tp, fa: d.fa, es: d.es, mo: d.mo, md: d.md, ej: d.ej, me: d.me, ft: d.ft, hab: d.hab, cin: d.cin, e: d.e, hu: d.hu, s: d.s, dg: d.dg, no: d.no, ws: d.ws, ver: d.ver, at: Date.now() });
+    cl.updatedAt = Date.now(); save();
+  }
+  /* ── Nube: lo que mandan los alumnos llega solo ─────────────────── */
+  const cloud = { user: null, msg: '' };
+  const setCloudMsg = t => { cloud.msg = t; const el = document.getElementById('cloud-st'); if (el) el.textContent = t; };
+  const seenKeep = a => a.slice(-400);
+  async function cloudStart() {
+    if (!NG.Cloud || !NG.Cloud.on()) return;
+    try {
+      cloud.user = await NG.Cloud.user();
+      if (!cloud.user) { setCloudMsg('Sin conectar'); return; }
+      D.cloud = D.cloud || { ck: [], fm: [] };
+      const keys = Object.values(D.clients).filter(c => c.cloudKey).map(c => [c.id, c.cloudKey]);
+      await NG.Cloud.watch({
+        keys,
+        onCheckin: (cid, id, doc) => {
+          const cl = D.clients[cid]; if (!cl || D.cloud.ck.includes(id)) return;
+          D.cloud.ck = seenKeep(D.cloud.ck.concat(id));
+          addCheckin(cl, doc.data || {});
+          U.toast('📋 Check-in nuevo de ' + first(cl.profile.name)); render();
+        },
+        onForm: (id, doc) => {
+          if (D.cloud.fm.includes(id)) return;
+          const p = doc.data && doc.data.p; if (!p) return;
+          D.cloud.fm = seenKeep(D.cloud.fm.concat(id));
+          const cl = newClient(p); cl.plan.meals = E.genPlan(cl); D.clients[cl.id] = cl; save();
+          U.toast('📝 Formulario nuevo: ' + (p.name || 'alumno')); render();
+        },
+        onError: e => setCloudMsg('⚠️ ' + (e && e.code === 'permission-denied' ? 'Sin permiso: ¿entraste con la cuenta del entrenador?' : 'No se pudo leer la nube')),
+      });
+      setCloudMsg('✅ Conectado como ' + cloud.user.email);
+    } catch (e) { console.warn(e); setCloudMsg('⚠️ No se pudo conectar con la nube'); }
+  }
   async function doPaste(txt) {
     const frm = txt.match(/#FRM:([\w-]+)/), chk = txt.match(/#CHK:([\w-]+)/), pl = txt.match(/#p=([\w-]+)/);
     try {
@@ -699,10 +744,7 @@
       if (chk) {
         const d = await S.unpack(chk[1]); const cl = d && D.clients[d.id];
         if (!cl) return U.toast('⚠️ Ese check-in es de un alumno que no está en este panel');
-        cl.checkins = (cl.checkins || []).filter(c => c.date !== d.d);
-        cl.checkins.push({ date: d.d, avg: d.avg, prev: d.prev, adh: d.adh, done: d.done, tot: d.tot, lib: d.lib, w: d.w,
-          tr: d.tr, tp: d.tp, fa: d.fa, es: d.es, mo: d.mo, md: d.md, ej: d.ej, me: d.me, ft: d.ft, hab: d.hab, cin: d.cin, e: d.e, hu: d.hu, s: d.s, dg: d.dg, no: d.no, ws: d.ws, ver: d.ver, at: Date.now() });
-        cl.updatedAt = Date.now(); save(); U.closeAll(); U.toast(`✅ Check-in de ${first(cl.profile.name)} guardado`);
+        addCheckin(cl, d); U.closeAll(); U.toast(`✅ Check-in de ${first(cl.profile.name)} guardado`);
         cs.tab = 'progreso'; if (location.hash === '#coach/c/' + cl.id + '/progreso') render(); else location.hash = '#coach/c/' + cl.id + '/progreso'; return;
       }
       if (pl) {
@@ -738,6 +780,8 @@
     const done = (msg) => { touch(cl); if (msg) U.toast(msg); render(); };
     switch (a) {
       case 'go': location.hash = ds.h; return;
+      case 'cloudin': try { NG.Cloud.stop(); await NG.Cloud.login(); await cloudStart(); render(); } catch (e) { U.toast('No se pudo entrar: ' + ((e && e.code) || 'error')); } return;
+      case 'cloudout': NG.Cloud.stop(); await NG.Cloud.logout(); cloud.user = null; setCloudMsg('Sin conectar'); return render();
       case 'jump': { const s = document.getElementById(ds.id); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       case 'lock': sessionStorage.removeItem('ng_unlock'); return mount(cs.route);
       case 'open': cs.tab = 'perfil'; location.hash = '#coach/c/' + ds.id; return;

@@ -484,21 +484,25 @@
       <label class="fld"><span>💬 ¿Algo más que quieras contarme?</span><textarea id="ck-no" rows="2" placeholder="Cómo te sentiste, qué te costó, dudas…"></textarea></label>
       ${photoDue() ? `<div class="card tipc"><b>📸 Esta semana tocan tus fotos</b><p class="sm">Frente, perfil y espalda. Después subilas a tu Drive, en «03 Fotos de Progreso».</p></div>` : ''}
       ${!wk.avg ? '<p class="sm warnline">Registrá tu peso en Progreso para un mejor check-in.</p>' : ''}
-      <div class="stack">${(PL().co || {}).w ? `<button class="btn wa block" data-a="ck-send">${ic('chat')} Enviar por WhatsApp</button>` : ''}
-      <button class="btn ${(PL().co || {}).w ? 'ghost' : 'pri'} block" data-a="ck-copy">${ic('copy')} Copiar mensaje</button></div>`);
+      <div class="stack">${cloudOk() ? `<button class="btn pri block big" data-a="ck-cloud">${ic('send')} Enviar a ${esc((PL().co || {}).n || 'mi entrenador')}</button>` : ''}
+      ${(PL().co || {}).w ? `<button class="btn ${cloudOk() ? 'ghost' : 'wa'} block" data-a="ck-send">${ic('chat')} ${cloudOk() ? 'Por WhatsApp' : 'Enviar por WhatsApp'}</button>` : ''}
+      <button class="btn ghost block" data-a="ck-copy">${ic('copy')} Copiar mensaje</button></div>`);
   }
+  const cloudOk = () => !st.preview && NG.Cloud && NG.Cloud.on() && !!PL().sk;
   async function checkinText() {
     const P = PL(), wk = weekStats(S.today()), c = st.ck;
     const val = id => ((document.getElementById(id) || {}).value || '').trim();
     c.no = val('ck-no'); c.md = c.mo ? val('ck-md') : ''; c.ej = val('ck-ej');
     const ws = (st.data.weights || []).filter(w => w.d >= S.addDays(S.today(), -20)).map(w => [w.d, w.kg]);
     const ph = phase(), ft = photoDue();
-    const code = await S.pack({
+    const data = {
       v: 1, id: P.id, ver: P.ver, d: S.today(), avg: wk.avg ? Math.round(wk.avg * 10) / 10 : null, prev: wk.prev ? Math.round(wk.prev * 10) / 10 : null,
       adh: wk.adh, done: wk.done, tot: wk.tot, lib: wk.lib, ph: ph ? ph.idx + 1 : null, w: wk.water ? Math.round(wk.water * 10) / 10 : null, hab: wk.habits, cin: wk.cin,
       e: c.e, hu: c.hu, s: c.s, dg: c.dg, tr: c.tr, tp: c.tp, fa: c.fa, es: c.es, mo: c.mo, md: c.md.slice(0, 200), ej: c.ej.slice(0, 200), me: c.me, ft: ft ? 1 : 0,
       no: c.no.slice(0, 600), ws,
-    });
+    };
+    st.ckData = data;
+    const code = await S.pack(data);
     const diff = wk.avg && wk.prev ? wk.avg - wk.prev : null;
     const lines = [
       `📋 *Check-in semanal* – ${P.cl.n || ''}`,
@@ -592,6 +596,14 @@
       }
       case 'wdel': st.data.weights = st.data.weights.filter(w => w.d !== ds.d); save(); return render();
       case 'checkin': return sheetCheckin();
+      case 'ck-cloud': {
+        el.disabled = true; el.textContent = 'Enviando…';
+        await checkinText();
+        const r = await NG.Cloud.sendCheckin(PL().sk, st.ckData);
+        st.data.checks.push({ d: S.today() }); save(); U.close();
+        U.toast(r === 'ok' ? '✅ Check-in enviado' : 'Sin conexión: se envía solo cuando vuelvas a tener internet');
+        return render();
+      }
       case 'ck-send': case 'ck-copy': {
         const txt = await checkinText();
         if (!st.preview) { st.data.checks.push({ d: S.today() }); save(); }

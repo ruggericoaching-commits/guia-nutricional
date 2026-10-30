@@ -101,9 +101,10 @@
           <span>${g.e || ''} ${g.n || ''}</span><span>🏋️ ${[NG.EXPERIENCE[p.experience], NG.EQUIPMENT[p.equipment]].filter(Boolean).join(' · ')}</span><span>🍽️ ${p.nMeals} comidas · ${NG.COOKING[p.cooking] || ''}</span><span>🥗 ${NG.DIETAS[p.diet]}${p.allergens.length ? ' · Sin ' + p.allergens.map(a => NG.ALG[a]).join(', ') : ''}</span>
           ${p.medical.length ? `<span>🩺 ${p.medical.map(id => (NG.MED.find(m => m.id === id) || {}).n).join(', ')}</span>` : ''}</div>
           <button class="chk ${p.ok ? 'on' : ''}" data-a="okt"><span class="tck">${p.ok ? ic('check', 14) : ''}</span>Confirmo que los datos son correctos y entiendo que esta guía no reemplaza la consulta médica.</button>
-          ${st.sent ? `<div class="card ok">✅ ¡Listo! Si no se abrió WhatsApp, tocá «Copiar» y mandáselo.</div>` : ''}
-          <div class="stack">${st.co.w ? `<button class="btn wa block big" data-a="send">${ic('chat')} Enviar por WhatsApp</button>` : ''}
-          <button class="btn ${st.co.w ? 'ghost' : 'pri big'} block" data-a="copy">${ic('copy')} Copiar respuestas</button></div>`;
+          ${st.sent ? `<div class="card ok">${st.sent === 'cloud' ? '✅ ¡Enviado! Tu entrenador ya lo recibió.' : st.sent === 'queued' ? 'Sin conexión: se envía solo cuando vuelvas a tener internet.' : '✅ ¡Listo! Si no se abrió WhatsApp, tocá «Copiar» y mandáselo.'}</div>` : ''}
+          <div class="stack">${NG.Cloud && NG.Cloud.on() ? `<button class="btn pri block big" data-a="cloud">${ic('send')} Enviar a ${esc(st.co.n || 'mi entrenador')}</button>` : ''}
+          ${st.co.w ? `<button class="btn ${NG.Cloud && NG.Cloud.on() ? 'ghost' : 'wa big'} block" data-a="send">${ic('chat')} Por WhatsApp</button>` : ''}
+          <button class="btn ghost block" data-a="copy">${ic('copy')} Copiar respuestas</button></div>`;
       }
     }
     return '';
@@ -187,6 +188,10 @@
     if (a === 'tradd') p.training.push({ type: 'cardio', days: 2, min: 45 });
     if (a === 'trdel') p.training.splice(+ds.i, 1);
     if (a === 'okt') p.ok = !p.ok;
+    if (a === 'cloud') {
+      if (!p.ok) return U.toast('Marcá la casilla de confirmación');
+      st.sent = await NG.Cloud.sendForm({ v: 1, t: 'frm', ts: Date.now(), p: profileOut() }) === 'ok' ? 'cloud' : 'queued';
+    }
     if (a === 'send' || a === 'copy') {
       if (!p.ok) return U.toast('Marcá la casilla de confirmación');
       const txt = await message();

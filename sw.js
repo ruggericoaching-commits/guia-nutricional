@@ -1,9 +1,9 @@
 /* Service worker: la app funciona sin internet y se actualiza sola.
    Al publicar cambios, subí el número de versión de CACHE. */
-const CACHE = 'guia-nutricional-v14';
+const CACHE = 'guia-nutricional-v15';
 const ASSETS = [
   './', 'index.html', 'css/styles.css', 'manifest.webmanifest',
-  'js/foods.js', 'js/content.js', 'js/engine.js', 'js/store.js', 'js/ui.js', 'js/client.js', 'js/form.js', 'js/coach.js', 'js/app.js',
+  'js/foods.js', 'js/content.js', 'js/engine.js', 'js/cloud-config.js', 'js/store.js', 'js/cloud.js', 'js/ui.js', 'js/client.js', 'js/form.js', 'js/coach.js', 'js/app.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
 ];
 

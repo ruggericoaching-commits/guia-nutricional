@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// Reglas de Cloud Firestore · NutriApp
+// - Cada alumno tiene un código largo y secreto dentro de su link: /s/{secret}
+//   Con ese código puede guardar y ver SUS check-ins. Nadie puede listar los códigos de los demás.
+// - Los formularios nuevos se pueden crear sin cuenta, pero no leer.
+// - Solo el entrenador (su cuenta de Google verificada) puede leer y modificar todo.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isCoach() {
+      return request.auth != null
+        && request.auth.token.email == 'ruggeri.coaching@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    // Plan publicado del alumno (lo escribe el entrenador; el alumno solo lo lee con su código)
+    match /s/{secret} {
+      allow get: if true;
+      allow list, create, update, delete: if isCoach();
+
+      // Check-ins: el alumno crea (no puede pisar ni borrar), el entrenador lee y gestiona
+      match /checkins/{id} {
+        allow get, list: if true;
+        allow create: if request.resource.data.keys().hasOnly(['d', 'v', 'data', 'at'])
+          && request.resource.data.d is string && request.resource.data.d.size() <= 10
+          && request.resource.data.data is map
+          && request.resource.data.at == request.time;
+        allow update, delete: if isCoach();
+      }
+    }
+
+    // Formulario inicial de un alumno nuevo: se puede enviar, solo el entrenador lo lee
+    match /forms/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['data', 'at'])
+        && request.resource.data.data is map
+        && request.resource.data.at == request.time;
+      allow read, update, delete: if isCoach();
+    }
+  }
+}
