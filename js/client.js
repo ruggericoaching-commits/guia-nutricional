@@ -42,7 +42,7 @@
     const L = peek(d), t = { k: 0, p: 0, c: 0, f: 0 };
     meals().forEach(m => {
       const v = L.m[m.i]; if (v == null || v === -2) return;
-      const o = m.o[v], add = v >= 0 && o && !o.y ? E.sum(items(o)) : tgt(m);
+      const o = m.o[v], add = v === -4 ? E.sum((L.c || {})[m.i] || []) : v >= 0 && o && !o.y ? E.sum(items(o)) : tgt(m);
       t.k += add.k; t.p += add.p; t.c += add.c; t.f += add.f;
     });
     return t;
@@ -214,7 +214,7 @@
         <div class="row between"><h3>Comidas</h3><span class="mut sm">${done}/${ms.length}</span></div>
         <div class="tl">${ms.map(m => {
           const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
-          const lbl = v == null ? '' : v === -1 ? '🧭 Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? '🍕 Comida libre' : (o ? o.n : '');
+          const lbl = v == null ? '' : v === -1 ? '🧭 Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? '🍕 Comida libre' : v === -4 ? ((peek(d).c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? o.n : '');
           return `<div class="tli ${v == null ? '' : v === -2 ? 'off' : v === -3 ? 'done free' : 'done'}">
             <button class="tck" data-a="mcheck" data-m="${m.i}" aria-label="Marcar">${v == null ? '' : v === -2 ? '–' : v === -3 ? '🍕' : ic('check', 18)}</button>
             <div class="tlb" data-a="mopen" data-m="${m.i}"><div class="row between"><b>${(NG.MEAL_TYPES[m.y] || {}).e || '🍽️'} ${esc(m.n)}</b><span class="mut sm">${esc(m.h || '')}</span></div>
@@ -399,7 +399,34 @@
       }).join('')}</div>
       <div class="pk-alt">${m.o.some(o => o.y) ? '' : alt(-1, 'Comí afuera')}
         ${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
-        ${alt(-2, 'No seguí el plan')}</div>`);
+        ${alt(-2, 'No seguí el plan')}</div>
+      <button class="btn ghost block" data-a="cbopen" data-m="${m.i}">${ic('plus', 15)} ${cur === -4 ? 'Editar lo que comí' : 'Otra comida'}</button>`);
+  }
+  // Armador de comida propia: cualquier alimento, con sus gramos; suma a los macros del día
+  const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const defG = f => Math.max(+f.mn || 0, Math.min(+f.mx || 1000, f.ug || 100));
+  function cbList() {
+    const q = norm(st.cb.q), added = new Set(st.cb.items.map(i => i.f));
+    const all = Object.values(NG.allFoods()).filter(f => !added.has(f.id) && (!st.cb.g || f.g === st.cb.g) && (!q || norm(f.n).includes(q)))
+      .sort((a, b) => a.n.localeCompare(b.n)).slice(0, 60);
+    return all.map(f => `<button class="it" data-a="cbadd" data-f="${f.id}"><span class="it-e">${f.e}</span><span class="it-n">${esc(f.n)}<small>${n0(f.k)} kcal cada 100 ${f.ml ? 'ml' : 'g'}</small></span>${ic('plus', 16)}</button>`).join('') || '<div class="empty sm">Sin resultados.</div>';
+  }
+  function cbBody() {
+    const cb = st.cb, tot = E.sum(cb.items), m = meals().find(x => x.i === cb.m);
+    return `<h3>${esc(m.n)} · lo que comí</h3>
+      <div class="cb-tot"><b>${n0(tot.k)}<small> kcal</small></b><span>P ${n0(tot.p)} · C ${n0(tot.c)} · G ${n0(tot.f)}</span></div>
+      <div class="items cb-items">${cb.items.map((it, i) => { const f = NG.food(it.f); return `<div class="it static"><span class="it-e">${f.e}</span><span class="it-n">${esc(f.n)}</span>
+        <span class="cb-q"><button data-a="cbg" data-i="${i}" data-d="-${f.st || 10}" aria-label="Menos">−</button><b>${it.g} ${f.ml ? 'ml' : 'g'}</b><button data-a="cbg" data-i="${i}" data-d="${f.st || 10}" aria-label="Más">+</button></span>
+        <button class="ib sm" data-a="cbdel" data-i="${i}" aria-label="Quitar">${ic('x', 14)}</button></div>`; }).join('') || '<p class="sm mut">Sumá los alimentos de abajo.</p>'}</div>
+      <input type="search" class="search block" placeholder="Buscar alimento…" data-live="cbq" value="${esc(cb.q)}">
+      <div class="chips sm cb-grp">${[['', 'Todos']].concat(Object.entries(NG.GRUPOS).map(([k, g]) => [k, g.e + ' ' + g.n])).map(([k, n]) => `<button class="chip ${cb.g === k ? 'on' : ''}" data-a="cbgrp" data-v="${k}">${n}</button>`).join('')}</div>
+      <div class="items cb-list" id="cb-list">${cbList()}</div>
+      <button class="btn pri block" data-a="cbsave" ${cb.items.length ? '' : 'disabled'}>Guardar</button>`;
+  }
+  function sheetCb(mid) {
+    const prev = (peek(st.day).c || {})[mid];
+    st.cb = { m: mid, items: prev ? prev.map(i => ({ ...i })) : [], q: '', g: '' };
+    U.close(); U.open(cbBody(), { wide: true });
   }
   function sheetFree() {
     const n = freePerWeek(), left = freeLeft(st.day);
@@ -531,6 +558,16 @@
         return render();
       }
       case 'free': return sheetFree();
+      case 'cbopen': return sheetCb(ds.m);
+      case 'cbadd': { const f = NG.food(ds.f); if (f) st.cb.items.push({ f: f.id, g: defG(f) }); st.cb.q = ''; return U.update(cbBody()); }
+      case 'cbdel': st.cb.items.splice(+ds.i, 1); return U.update(cbBody());
+      case 'cbg': { const it = st.cb.items[+ds.i], f = NG.food(it.f); it.g = Math.max(f.st || 10, Math.min(+f.mx || 2000, it.g + +ds.d)); return U.update(cbBody()); }
+      case 'cbgrp': st.cb.g = ds.v; return U.update(cbBody());
+      case 'cbsave': {
+        const L = log(st.day); L.c = L.c || {}; L.c[st.cb.m] = st.cb.items; L.m[st.cb.m] = -4; save(); U.close();
+        if (doneCount(st.day) === meals().length) U.toast('🎉 ¡Día completo! Excelente trabajo'); else U.toast('Comida guardada');
+        return render();
+      }
       case 'ckset': {
         st.ck[ds.c] = +ds.v;
         el.parentElement.querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b === el));
@@ -590,6 +627,7 @@
     }
   }
   function input(el) {
+    if (el.dataset.live === 'cbq' && st.cb) { st.cb.q = el.value; const l = document.getElementById('cb-list'); if (l) l.innerHTML = cbList(); U.mute(l); return; }
     if (el.dataset.live === 'ck') { st.ck[el.dataset.c] = +el.value; const o = document.getElementById('ckv-' + el.dataset.c); if (o) o.textContent = el.value; }
   }
   function change() {}

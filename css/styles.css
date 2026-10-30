@@ -714,3 +714,17 @@ summary:hover { opacity: .75; }
 .intro { padding: 12vh 0 4vh; }
 .intro h1 { font-size: 40px; margin: 10px 0 8px; }
 .intro p { font-size: 16px; margin: 0; }
+
+/* Armador de comida propia */
+.cb-tot { display: flex; align-items: baseline; justify-content: space-between; margin: 6px 0 12px; }
+.cb-tot b { font-size: 38px; font-weight: 700; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.cb-tot b small { font-size: 14px; color: var(--mut); letter-spacing: 0; font-weight: 500; }
+.cb-tot span { color: var(--mut); font-size: 13px; }
+.cb-q { display: inline-flex; align-items: center; gap: 2px; background: var(--card3); border-radius: 10px; padding: 2px; flex-shrink: 0; }
+.cb-q b { min-width: 62px; text-align: center; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.cb-q button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; font-size: 17px; cursor: pointer; }
+.cb-q button:hover { background: var(--card2); }
+.cb-list { max-height: 34vh; overflow: auto; margin-top: 10px; }
+.cb-items { margin-bottom: 14px; }
+.sheet .search.block { margin: 4px 0 8px; }
+.cb-grp { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; } .cb-grp::-webkit-scrollbar { display: none; } .cb-grp .chip { white-space: nowrap; flex-shrink: 0; }
