@@ -29,6 +29,14 @@
   window.addEventListener('hashchange', route);
 
   if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) {
+    // Versión nueva de la app: se recarga sola (salvo que esté escribiendo o con una hoja abierta)
+    const had = !!navigator.serviceWorker.controller; let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!had || reloaded) return; reloaded = true;
+      const busy = () => NG.UI.isOpen() || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '');
+      const go = () => { if (busy()) return setTimeout(go, 4000); location.reload(); };
+      go();
+    });
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
   }
   route();
