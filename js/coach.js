@@ -702,6 +702,8 @@
       <textarea id="paste-t" rows="7" autofocus placeholder="📝 Formulario inicial…  /  📋 Check-in…  /  https://…#p=…"></textarea>
       <button class="btn pri block" data-a="pastedo">Importar</button>`, { wide: true });
   }
+  // Alumno que ya está cargado con el mismo celular o el mismo nombre
+  const dupOf = p => { const ph = U.phone(p.phone), nm = String(p.name || '').trim().toLowerCase(); return Object.values(D.clients).find(c => !c.demo && ((ph && U.phone(c.profile.phone) === ph) || (nm && String(c.profile.name || '').trim().toLowerCase() === nm))); };
   function addCheckin(cl, d) {
     cl.checkins = (cl.checkins || []).filter(c => c.date !== d.d);
     cl.checkins.push({ date: d.d, avg: d.avg, prev: d.prev, adh: d.adh, done: d.done, tot: d.tot, lib: d.lib, w: d.w,
@@ -731,6 +733,7 @@
           if (D.cloud.fm.includes(id)) return;
           const p = doc.data && doc.data.p; if (!p) return;
           D.cloud.fm = seenKeep(D.cloud.fm.concat(id));
+          const dup = dupOf(p); if (dup) { U.toast('📝 ' + first(dup.profile.name) + ' volvió a mandar el formulario: ya estaba cargado'); save(); return; }
           const cl = newClient(p); cl.plan.meals = E.genPlan(cl); D.clients[cl.id] = cl; save();
           U.toast('📝 Formulario nuevo: ' + (p.name || 'alumno')); render();
         },
@@ -744,6 +747,8 @@
     try {
       if (frm) {
         const d = await S.unpack(frm[1]); if (!d || !d.p) throw 0;
+        const dup = dupOf(d.p);
+        if (dup && !(await U.confirm(`${dup.profile.name} ya está cargado. ¿Crear otro alumno igual?`, { yes: 'Crear otro' }))) { U.closeAll(); cs.tab = 'perfil'; location.hash = '#coach/c/' + dup.id; return; }
         const cl = newClient(d.p);
         cl.plan.meals = E.genPlan(cl);
         D.clients[cl.id] = cl; save(); U.closeAll();

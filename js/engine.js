@@ -459,8 +459,8 @@
     const idx = week <= 2 ? 0 : week <= 4 ? 1 : 2;
     return { idx, week, ph: NG.PHASES[idx], inPhase: idx === 2 ? week - 4 : week - idx * 2 };
   }
-  // Fotos de progreso: al inicio y cada 4 semanas (semanas 4, 8, 12…)
-  const photoDue = (start, today) => { const w = weekOf(start, today); return !!w && w % 4 === 0; };
+  // Fotos de progreso: las primeras el día 1 y después cada 4 semanas (semanas 5, 9, 13…)
+  const photoDue = (start, today) => { const w = weekOf(start, today); return !!w && w > 1 && (w - 1) % 4 === 0; };
 
   /* ── Análisis de check-ins ─────────────────────────────────────── */
   function analyze(cl, T) {

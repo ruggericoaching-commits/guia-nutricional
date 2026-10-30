@@ -129,6 +129,9 @@
     let d = String(num || '').replace(/\D/g, '');
     if (d.startsWith('00')) d = d.slice(2);
     if (d.startsWith('0')) d = d.slice(1);
+    // Con el «15» del celular: 11 15 1234 5678 → se saca el 15 (el código de área puede tener de 2 a 4 dígitos)
+    if (d.length === 12 && !d.startsWith('54')) { for (let a = 2; a <= 4; a++) if (d.slice(a, a + 2) === '15') { d = d.slice(0, a) + d.slice(a + 2); break; } }
+    else if (d.length === 10 && d.startsWith('15')) d = '11' + d.slice(2); // sin código de área: se asume Buenos Aires
     if (d.length === 10) d = '549' + d;
     else if (d.length === 12 && d.startsWith('54') && !d.startsWith('549')) d = '549' + d.slice(2);
     return d;
