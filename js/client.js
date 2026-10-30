@@ -300,7 +300,7 @@
             <button class="btn ghost sm cb-btn" data-a="cbopen" data-m="${m.i}">${ic('plus', 14)} Comí otra cosa</button>
             ${o ? `${m.o.length === 1 ? `<h4 class="oname">${o.y ? '🧭 ' : ''}${esc(o.n)}</h4>` : ''}${optionBody(m, o)}` : ''}
             ${m.no ? `<div class="note">📝 ${esc(m.no)}</div>` : ''}
-            <details class="out"><summary>¿Comés afuera?</summary><p class="sm pre">${esc(NG.FLEX[m.y === 'almuerzo' || m.y === 'cena' ? 'ac' : m.y === 'colacion' ? 'sn' : 'dm'])}</p></details>
+            
           </div>` : ''}
         </section>`;
       }).join(''), 'a'],
@@ -310,26 +310,12 @@
 
   /* AFUERA */
   function vAfuera() {
-    const g = PL().cl.g, plate = g === 'ganar' || g === 'rend'
-      ? [['🥦', 'Verduras', 34, 'var(--ok)'], ['🍗', 'Proteína', 33, 'var(--P)'], ['🍚', 'Carbohidratos', 33, 'var(--C)']]
-      : [['🥦', 'Verduras', 50, 'var(--ok)'], ['🍗', 'Proteína', 25, 'var(--P)'], ['🍚', 'Carbohidratos', 25, 'var(--C)']];
-    let acc = 0;
-    const stops = plate.map(([, , p, c]) => { const s = `${c} ${acc}% ${acc + p}%`; acc += p; return s; }).join(',');
-    return `${hero('Comer afuera', 'Cómo seguir tu plan en cualquier lugar')}
+    return `${hero('Comer afuera', 'Ideas para pedir en cada lugar')}
       ${layout([
-      [`<section class="card t-mint">
-        <h3>🍽️ El plato ideal</h3>
-        <div class="plate-w"><div class="plate" style="background:conic-gradient(${stops})"></div>
-          <div class="plate-l">${plate.map(([e, n, p, c]) => `<div><i style="background:${c}"></i>${e} ${n} <b>${p === 34 || p === 33 ? '⅓' : p === 50 ? '½' : '¼'}</b></div>`).join('')}<div><i style="background:var(--F)"></i>🫒 + 1 porción de grasa saludable</div></div></div>
-      </section>`, 'b'],
-      [`<h3 class="sec">📍 Según dónde estés</h3>`, 'a'],
       [NG.PLACES.map((p, i) => `<section class="card acc t-coral ${st.place === i ? 'open' : ''}">
         <button class="acc-h" data-a="place" data-i="${i}"><span>${p.e}</span><b>${esc(p.t)}</b>${ic(st.place === i ? 'chevU' : 'chevD', 18)}</button>
-        ${st.place === i ? `<div class="acc-b"><div class="good"><b>✅ Mejores elecciones</b><ul>${p.best.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-          <div class="mod"><b>⚠️ Con moderación</b><ul>${p.mod.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-          ${p.tip ? `<p class="sm tipline">💡 ${esc(p.tip)}</p>` : ''}</div>` : ''}</section>`).join(''), 'a'],
-      [`<section class="card t-sky"><h3>🏷️ Cómo leer etiquetas</h3><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
-      [`<section class="card t-violet"><h3>🍷 Alcohol</h3><ul class="clean">${NG.ALCOHOL_TIPS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
+        ${st.place === i ? `<div class="acc-b"><ul class="clean">${p.best.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}</section>`).join(''), 'a'],
+      [`<section class="card t-sky"><h3>Cómo leer etiquetas</h3><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
       ])}`;
   }
 
@@ -414,8 +400,7 @@
         return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}">
           <span class="pk-t"><b>${esc(t)}</b>${d.length ? `<small>${esc(d.join(': '))}</small>` : ''}</span><span class="pk-k">${n0(k)}<small>kcal</small></span></button>`;
       }).join('')}</div>
-      <div class="pk-alt">${m.o.some(o => o.y && !m.o.some(z => !z.y)) ? '' : alt(-1, 'Comí afuera')}
-        ${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
+      <div class="pk-alt">${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
         ${alt(-2, 'No seguí el plan')}</div>
       <button class="btn ghost block" data-a="cbopen" data-m="${m.i}">${ic('plus', 15)} ${cur === -4 ? 'Editar lo que comí' : 'Comí otra cosa'}</button>`);
   }

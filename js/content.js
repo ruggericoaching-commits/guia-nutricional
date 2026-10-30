@@ -245,63 +245,43 @@
   NG.PLACES = [
     {
       e: '🍽️', t: 'Restaurante, bodegón o menú ejecutivo',
-      best: ['Carne, pollo o pescado a la plancha, al horno o grillados', 'Guarnición de ensalada o verduras (podés pedir doble)', 'Arroz, papa o puré en la porción que te toca', 'Agua, soda o bebida zero'],
-      mod: ['Frituras, rebozados y salsas cremosas (pedí la salsa aparte)', 'La panera: decidí antes si vas a comer y cuánto', 'Postre: compartilo o elegí fruta o café'],
-      tip: 'Mirá la carta antes de ir y elegí con la cabeza, no con el hambre.',
+      best: ['Carne, pollo o pescado a la plancha, al horno o grillados', 'Guarnición de ensalada o verduras', 'Arroz, papa o puré', 'Agua, soda o lo que prefieras'],
     },
     {
       e: '🔥', t: 'Parrilla y asado',
-      best: ['Cortes magros: lomo, colita de cuadril, peceto, bola de lomo, pollo sin piel', 'Ensaladas variadas y verduras a la parrilla', 'Provoleta para compartir, porción chica'],
-      mod: ['Chorizo, morcilla y achuras: elegí uno, no de todo', 'Cortes grasos (vacío, matambre, costillar): porción chica', 'Pan, papas fritas y alcohol'],
-      tip: 'Serví primero ensalada y proteína en tu plato, y comé despacio.',
+      best: ['Cortes magros: lomo, colita de cuadril, peceto, bola de lomo, pollo sin piel', 'Ensaladas variadas y verduras a la parrilla', 'Provoleta para compartir'],
     },
     {
       e: '🍔', t: 'Comida rápida y hamburgueserías',
-      best: ['Hamburguesa simple (no doble ni triple) o de pollo grillado', 'Wraps o ensaladas con pollo', 'Agua o bebida zero', 'Papas chicas, o cambialas por ensalada'],
-      mod: ['Bacon, cheddar extra y salsas', 'Combos agrandados y bebidas con azúcar', 'Nuggets y pollo frito'],
-      tip: 'Si sabés que vas, hacé el resto del día con más verduras y proteína magra.',
+      best: ['Hamburguesa o de pollo grillado', 'Wraps o ensaladas con pollo', 'Papas o ensalada'],
     },
     {
       e: '🍕', t: 'Pizzería y empanadas',
-      best: ['2 porciones o 2–3 empanadas al horno + ensalada', 'Pizza de muzzarella, napolitana o con verduras', 'Empanadas de pollo, carne o verdura al horno'],
-      mod: ['Fugazzeta, cuatro quesos o con extra queso', 'Empanadas fritas', 'Fainá y pizza de molde gruesa'],
-      tip: 'Empezá por una ensalada: llegás con menos hambre a la pizza.',
+      best: ['Porciones de pizza o empanadas al horno + ensalada', 'Pizza de muzzarella, napolitana o con verduras', 'Empanadas de pollo, carne o verdura al horno'],
     },
     {
       e: '🏪', t: 'Kiosco, estación de servicio o súper',
       best: ['Yogur (mejor si es alto en proteína)', 'Fruta', 'Puñado de frutos secos o maní sin sal', 'Barrita proteica', 'Sándwich de miga o tostado de jamón y queso', 'En el súper: atún en lata + pan + tomate'],
-      mod: ['Alfajores, galletitas dulces y facturas', 'Gaseosas y jugos con azúcar', 'Snacks de paquete (papas, palitos)'],
-      tip: 'Tené siempre un snack de emergencia en la mochila: fruta, frutos secos o una barrita.',
     },
     {
       e: '☕', t: 'Cafetería',
-      best: ['Café con leche, cortado o capuchino sin azúcar', 'Tostado de jamón y queso, o tostadas con queso', 'Yogur con frutas o licuado de fruta con leche sin azúcar'],
-      mod: ['Medialunas y facturas (una, y no todos los días)', 'Bebidas con crema, salsas y jarabes', 'Budines y tortas'],
-      tip: 'Pedí el café sin azúcar y endulzá con edulcorante si lo necesitás.',
+      best: ['Café con leche, cortado o capuchino', 'Tostado de jamón y queso, o tostadas con queso', 'Yogur con frutas o licuado de fruta con leche sin azúcar'],
     },
     {
       e: '💼', t: 'Comedor del trabajo o viandas',
-      best: ['Armá el plato: mitad verduras, un cuarto proteína y un cuarto carbohidratos', 'Elegí la opción con proteína visible: pollo, carne, pescado, huevo o legumbres', 'Si solo hay pastas o guiso: una porción del tamaño de tu puño y sumá ensalada'],
-      mod: ['Repetir plato', 'Postres y gaseosas', 'Frituras'],
-      tip: 'Llevá una fruta o un yogur para completar la comida si hace falta.',
+      best: ['Plato con proteína, verduras y algo de carbohidrato', 'Elegí la opción con proteína visible: pollo, carne, pescado, huevo o legumbres', 'Si solo hay pastas o guiso: sumá una ensalada'],
     },
     {
       e: '🛵', t: 'Delivery',
-      best: ['Wok de pollo o carne con verduras y arroz', 'Sushi: 8–10 piezas, mejor con sashimi y sin rolls fritos', 'Bowls o ensaladas con proteína', 'Pollo al spiedo sin piel + ensalada'],
-      mod: ['Milanesas fritas, papas fritas y pizzas con extra queso', 'Aderezos y salsas (pedilos aparte)'],
-      tip: 'Elegí el pedido antes de tener mucha hambre: decidís mejor.',
+      best: ['Wok de pollo o carne con verduras y arroz', 'Sushi, mejor con sashimi', 'Bowls o ensaladas con proteína', 'Pollo al spiedo sin piel + ensalada'],
     },
     {
       e: '🎉', t: 'Cumpleaños, eventos y salidas',
-      best: ['Comé algo con proteína antes de ir para no llegar con hambre', 'Elegí 1 o 2 gustos que realmente valgan la pena', 'Un vaso de agua entre cada bebida alcohólica'],
-      mod: ['El picoteo sin fin: servite en un plato y alejate de la mesa', 'Tragos dulces y mucha cerveza'],
-      tip: 'Disfrutá sin culpa: lo que cuenta es lo que hacés la mayor parte de la semana.',
+      best: ['Lo que más te guste de la mesa', 'Algo con proteína antes de ir, si te queda cómodo'],
     },
     {
       e: '✈️', t: 'Viajes',
       best: ['Llevá snacks: fruta, frutos secos, barritas, tostadas de arroz', 'En el súper: yogur, fruta, atún, pan integral, queso', 'Desayuno de hotel: huevos, yogur, fruta y pan integral'],
-      mod: ['Comida ultraprocesada de aeropuerto o ruta', 'Saltear comidas y después compensar comiendo de más'],
-      tip: 'Mantené tus horarios de comida lo más parecidos posible a los de casa.',
     },
   ];
 
@@ -329,7 +309,6 @@
   NG.FREE_TIPS = [
     'Elegí el momento: una salida, un asado, un cumpleaños.',
     'Disfrutala sin culpa: es parte de tu plan.',
-    'Comé una porción normal (no un atracón) y sumá algo de proteína.',
     'Volvé al plan en la comida siguiente, sin compensar ni saltear comidas.',
     'No se acumula: si no la usás, no pasa a la semana siguiente.',
   ];

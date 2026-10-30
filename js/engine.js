@@ -411,8 +411,7 @@
     if (T.goal === 'ganar') add('densos', '🥜', 'Si te cuesta llegar a las calorías', 'Sumá alimentos densos: frutos secos, pasta de maní, avena, aceite de oliva o licuados. Hacé todas tus comidas, sin saltear.');
     add('flex', '🎯', 'Constancia antes que perfección', 'Si cumplís el plan la mayor parte del tiempo (80–90%) vas a ver resultados. Una comida fuera del plan no arruina nada: seguí con la siguiente.');
     const fr = cl.plan && cl.plan.free != null ? +cl.plan.free : 1;
-    if (fr > 0) add('libre', '🍕', fr === 1 ? 'Tu comida libre de la semana' : `Tus ${fr} comidas libres de la semana`, `Tenés ${fr === 1 ? 'una comida libre' : fr + ' comidas libres'} por semana. Elegí el momento, disfrutala sin culpa, comé una porción normal con algo de proteína y volvé al plan en la comida siguiente. No se acumula de una semana a otra.`);
-    add('lento', '🍽️', 'Comé despacio y sin pantallas', 'Tomate 15 a 20 minutos por comida, masticá bien y pará cuando estés satisfecho, no lleno.', false);
+    if (fr > 0) add('libre', '🍕', fr === 1 ? 'Tu comida libre de la semana' : `Tus ${fr} comidas libres de la semana`, `Tenés ${fr === 1 ? 'una comida libre' : fr + ' comidas libres'} por semana. Elegí el momento y disfrutala sin culpa. No se acumula de una semana a otra.`);
     if (outside) add('planif', '🗓️', 'Planificá las comidas de afuera', 'Antes de salir, decidí qué y dónde vas a comer. Usá la sección «Afuera» para elegir bien en cualquier lugar.');
     if (p.cooking === 'cocina' && p.tupper) add('prep', '🥡', 'Cociná una vez, comé varias', 'Dedicá 1 o 2 momentos por semana a cocinar proteínas y carbohidratos en cantidad. En heladera duran 3 a 4 días; el resto, al freezer.');
     if (p.cooking !== 'cocina') add('etiq', '🏷️', 'Leé las etiquetas', 'Menos sellos negros = mejor elección. Mirá la porción y cuánta proteína y azúcar aporta.');
@@ -422,7 +421,6 @@
     }
     if (T.maxSession >= 90 && tr.some(t => ['cardio', 'deporte', 'hiit'].includes(t.type)))
       add('intra', '🏃', 'Sesiones largas', 'En entrenamientos de más de 90 minutos sumá 30 a 60 g de carbohidratos por hora (bebida deportiva, banana o dátiles) e hidratate con sales.');
-    if (p.alcohol && p.alcohol !== 'nunca') add('alcohol', '🍷', 'Alcohol', 'Aporta calorías sin nutrientes y empeora el descanso y la recuperación. Si tomás, que sea ocasional; alterná cada vaso con agua.');
     if (med.includes('cardio')) add('sodio', '🧂', 'Sal con moderación', 'Cociná con poca sal, usá especias y hierbas, y limitá fiambres y ultraprocesados con sello «Exceso en sodio».');
     if (med.includes('glp1')) add('glp1', '💉', 'Con medicación para el apetito', 'Priorizá la proteína en cada comida, hacé porciones chicas, hidratate bien y seguí las indicaciones de tu médico.');
     // Suplementos con mayor respaldo
