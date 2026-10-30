@@ -44,6 +44,16 @@
   }
   const sendCheckin = (sk, fields) => send(`s/${sk}/checkins`, { d: fields.d, v: 1, data: fields });
   const sendForm = data => send('forms', { data });
+  // Plan publicado: el panel lo guarda (empaquetado igual que el link) y la app del alumno lo busca al abrir
+  async function publishPlan(sk, code, ver) {
+    const { fs, db } = await load();
+    await withTimeout(fs.setDoc(fs.doc(db, 's', sk), { plan: code, ver, at: fs.serverTimestamp() }));
+  }
+  async function fetchPlan(sk) {
+    const { fs, db } = await load();
+    const s = await withTimeout(fs.getDoc(fs.doc(db, 's', sk)), 8000);
+    return s.exists() ? s.data() : null;
+  }
 
   /* ── Entrenador ────────────────────────────────────────────────── */
   async function user() { const { au, auth } = await load(); await auth.authStateReady(); return auth.currentUser; }
@@ -69,7 +79,7 @@
   }
   const stop = () => Object.keys(subs).forEach(k => { subs[k](); delete subs[k]; });
 
-  NG.Cloud = { on, sendCheckin, sendForm, flush, user, login, logout, watch, stop };
+  NG.Cloud = { on, sendCheckin, sendForm, publishPlan, fetchPlan, flush, user, login, logout, watch, stop };
   window.addEventListener('online', flush);
   setTimeout(flush, 2500);
 })(window.NG);

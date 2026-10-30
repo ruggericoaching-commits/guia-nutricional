@@ -106,6 +106,12 @@
     return cl;
   }
   const newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), b => b.toString(36).padStart(2, '0')).join('').slice(0, 32);
+  // Si hay sesión de la nube, el plan queda publicado y el alumno lo recibe al abrir la app (sin link nuevo)
+  async function publishPlan(cl, code) {
+    if (!cloud.user || !cl.cloudKey) return false;
+    try { await NG.Cloud.publishPlan(cl.cloudKey, code, cl.plan.version); cl.cloudVer = cl.plan.version; save(); return true; }
+    catch (e) { console.warn(e); return false; }
+  }
   async function makeLink(cl) {
     const P = cl.plan;
     if (!cl.cloudKey) cl.cloudKey = newKey();
@@ -114,7 +120,9 @@
     P.sentVersion = P.version; P.sentAt = Date.now();
     save();
     cloudStart();
-    return S.baseUrl(D.settings) + '#p=' + (await S.pack(payload(cl)));
+    const code = await S.pack(payload(cl));
+    await publishPlan(cl, code);
+    return S.baseUrl(D.settings) + '#p=' + code;
   }
   async function formLink() {
     const s = D.settings;
@@ -577,8 +585,9 @@
         <button class="btn ghost block" data-a="preview">${ic('eye')} Ver como lo verá el alumno</button>
       </section>
       <section class="card"><h3>📤 Enviar plan</h3>
-        <p class="sm mut">El link contiene el plan completo. Cuando hagas cambios, generá y mandá un link nuevo: su app se actualiza y conserva sus registros.</p>
-        <button class="btn pri block big" data-a="mklink" ${P.meals.length ? '' : 'disabled'}>${ic('link')} ${P.sentVersion ? (P.dirty ? 'Generar link actualizado' : 'Volver a generar el link') : 'Generar link del plan'}</button>
+        ${cloud.user ? `<button class="btn pri block big" data-a="pubplan" ${P.meals.length && cl.cloudKey ? '' : 'disabled'}>${ic('send')} ${cl.cloudVer && cl.cloudVer === P.version && !P.dirty ? 'Publicado ✓ · volver a publicar' : 'Publicar en su app'}</button>
+          <p class="sm mut">${cl.cloudKey ? 'Su app lo recibe al abrirla, sin link nuevo.' : 'Generá primero su link una vez (abajo): ahí se crea su acceso.'}</p>` : '<p class="sm mut">Entrá a la nube en Ajustes para que los cambios lleguen solos. Mientras tanto, cada cambio necesita un link nuevo.</p>'}
+        <button class="btn ${cloud.user && cl.cloudKey ? 'ghost' : 'pri'} block ${cloud.user && cl.cloudKey ? '' : 'big'}" data-a="mklink" ${P.meals.length ? '' : 'disabled'}>${ic('link')} ${P.sentVersion ? (P.dirty ? 'Generar link actualizado' : 'Volver a generar el link') : 'Generar link del plan'}</button>
         ${cs.link && cs.link.id === cl.id ? `<textarea readonly rows="3" class="linkbox" id="plink">${esc(cs.link.url)}</textarea>
           <div class="stack">${cl.profile.phone ? `<button class="btn wa block" data-a="lwa">${ic('chat')} Enviar por WhatsApp a ${esc(first(cl.profile.name))}</button>` : `<button class="btn wa block" data-a="lwa">${ic('chat')} Elegir chat de WhatsApp</button>`}
           <div class="row gap"><button class="btn ghost grow" data-a="lcopy">${ic('copy', 16)} Copiar mensaje</button><button class="btn ghost grow" data-a="lshare">${ic('share', 16)} Compartir</button></div></div>
@@ -780,6 +789,11 @@
     const done = (msg) => { touch(cl); if (msg) U.toast(msg); render(); };
     switch (a) {
       case 'go': location.hash = ds.h; return;
+      case 'pubplan': {
+        await makeLink(cl);
+        U.toast(cl.cloudVer === cl.plan.version ? '☁️ Publicado: el alumno lo ve al abrir su app' : 'No se pudo publicar: revisá la nube en Ajustes');
+        render(); return;
+      }
       case 'cloudin': try { NG.Cloud.stop(); await NG.Cloud.login(); await cloudStart(); render(); } catch (e) { U.toast('No se pudo entrar: ' + ((e && e.code) || 'error')); } return;
       case 'cloudout': NG.Cloud.stop(); await NG.Cloud.logout(); cloud.user = null; setCloudMsg('Sin conectar'); return render();
       case 'jump': { const s = document.getElementById(ds.id); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }

@@ -28,6 +28,7 @@
   const phase = () => (PL().ph ? E.phaseOf(PL().ph, S.today()) : null);
   const habitList = () => (phase() ? phase().ph.habits : HABITS);
   const freePerWeek = () => +(PL().fr || 0);
+  const nm = o => o.n.split(/:s*/)[0];
   const countFree = L => Object.values((L && L.m) || {}).filter(v => v === -3).length;
   function freeLeft(d) {
     const mon = S.addDays(d, -((new Date(d + 'T12:00:00').getDay() + 6) % 7));
@@ -106,6 +107,19 @@
   }
 
   /* ── Montaje ───────────────────────────────────────────────────── */
+  // Plan nuevo publicado por el entrenador: se descarga solo, conservando los registros
+  let syncing = false;
+  async function syncPlan() {
+    if (syncing || !st || st.preview || !NG.Cloud || !NG.Cloud.on() || !PL().sk || !navigator.onLine) return;
+    syncing = true;
+    try {
+      const d = await NG.Cloud.fetchPlan(PL().sk);
+      if (d && d.plan && (d.ver || 0) > (PL().ver || 0) && await importCode(d.plan, true)) mount();
+    } catch (e) { /* sin conexión: queda el plan que ya tiene */ }
+    syncing = false;
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) syncPlan(); });
+
   function mount(o = {}) {
     root = document.getElementById('app');
     const data = o.preview ? (o.demo ? demoData(o.plan) : { plan: o.plan, logs: {}, weights: [], checks: [], shop: {}, ui: {} }) : S.alumno();
@@ -119,6 +133,7 @@
     document.title = ((data.plan.co || {}).b || 'Guía Nutricional');
     window.scrollTo(0, 0);
     render();
+    syncPlan();
   }
 
   async function importCode(code, silent) {
@@ -281,8 +296,9 @@
             <span class="mk">${n0(m.t[0])}<small>kcal</small></span>${ic(open ? 'chevU' : 'chevD', 18)}</button>
           ${open ? `<div class="meal-b">
             ${pills(tgt(m), { sm: true })}
-            ${m.o.length > 1 ? `<div class="seg">${m.o.map((x, i) => `<button class="${i === sel ? 'on' : ''}" data-a="opt" data-m="${m.i}" data-o="${i}">${x.y ? '🧭 ' : ''}Opción ${String.fromCharCode(65 + i)}</button>`).join('')}</div>` : ''}
-            ${o ? `<h4 class="oname">${o.y ? '🧭 ' : ''}${esc(o.n)}</h4>${optionBody(m, o)}` : ''}
+            ${m.o.length > 1 ? `<div class="seg rc">${m.o.map((x, i) => `<button class="${i === sel ? 'on' : ''}" data-a="opt" data-m="${m.i}" data-o="${i}">${esc(nm(x))}</button>`).join('')}</div>` : ''}
+            <button class="btn ghost sm cb-btn" data-a="cbopen" data-m="${m.i}">${ic('plus', 14)} Comí otra cosa</button>
+            ${o ? `${m.o.length === 1 ? `<h4 class="oname">${o.y ? '🧭 ' : ''}${esc(o.n)}</h4>` : ''}${optionBody(m, o)}` : ''}
             ${m.no ? `<div class="note">📝 ${esc(m.no)}</div>` : ''}
             <details class="out"><summary>¿Comés afuera?</summary><p class="sm pre">${esc(NG.FLEX[m.y === 'almuerzo' || m.y === 'cena' ? 'ac' : m.y === 'colacion' ? 'sn' : 'dm'])}</p></details>
           </div>` : ''}
@@ -394,13 +410,13 @@
     U.open(`<h3>${esc(m.n)}</h3><p class="mut sm">¿Qué comiste?</p>
       <div class="pick">${m.o.map((o, i) => {
         const [t, ...d] = o.n.split(/:\s*/), k = o.y ? m.t[0] : E.sum(items(o)).k;
-        return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}"><span class="pk-l">${String.fromCharCode(65 + i)}</span>
+        return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}"><span class="pk-l">${o.y ? '🧭' : ((NG.food((items(o)[0] || {}).f) || {}).e || '🍽️')}</span>
           <span class="pk-t"><b>${esc(t)}</b>${d.length ? `<small>${esc(d.join(': '))}</small>` : ''}</span><span class="pk-k">${n0(k)}<small>kcal</small></span></button>`;
       }).join('')}</div>
       <div class="pk-alt">${m.o.some(o => o.y) ? '' : alt(-1, 'Comí afuera')}
         ${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
         ${alt(-2, 'No seguí el plan')}</div>
-      <button class="btn ghost block" data-a="cbopen" data-m="${m.i}">${ic('plus', 15)} ${cur === -4 ? 'Editar lo que comí' : 'Otra comida'}</button>`);
+      <button class="btn ghost block" data-a="cbopen" data-m="${m.i}">${ic('plus', 15)} ${cur === -4 ? 'Editar lo que comí' : 'Comí otra cosa'}</button>`);
   }
   // Armador de comida propia: cualquier alimento, con sus gramos; suma a los macros del día
   const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

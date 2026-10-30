@@ -728,3 +728,8 @@ summary:hover { opacity: .75; }
 .cb-items { margin-bottom: 14px; }
 .sheet .search.block { margin: 4px 0 8px; }
 .cb-grp { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; } .cb-grp::-webkit-scrollbar { display: none; } .cb-grp .chip { white-space: nowrap; flex-shrink: 0; }
+
+/* Recetas de cada comida: lista seleccionable con el nombre, sin letras */
+.seg.rc { flex-direction: column; overflow: visible; }
+.seg.rc button { text-align: left; white-space: normal; padding: 11px 12px; font-size: 14px; line-height: 1.3; }
+.cb-btn { margin-top: 10px; }
