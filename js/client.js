@@ -229,7 +229,7 @@
         <div class="row between"><h3>Comidas</h3><span class="mut sm">${done}/${ms.length}</span></div>
         <div class="tl">${ms.map(m => {
           const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
-          const lbl = v == null ? '' : v === -1 ? '🧭 Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? '🍕 Comida libre' : v === -4 ? ((peek(d).c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? nm(o) : '');
+          const lbl = v == null ? '' : v === -1 ? 'Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? 'Comida libre' : v === -4 ? ((peek(d).c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? nm(o) : '');
           return `<div class="tli ${v == null ? '' : v === -2 ? 'off' : v === -3 ? 'done free' : 'done'}">
             <button class="tck" data-a="mcheck" data-m="${m.i}" aria-label="Marcar">${v == null ? '' : v === -2 ? '–' : v === -3 ? '🍕' : ic('check', 18)}</button>
             <div class="tlb" data-a="mopen" data-m="${m.i}"><div class="row between"><b>${(NG.MEAL_TYPES[m.y] || {}).e || '🍽️'} ${esc(m.n)}</b><span class="mut sm">${esc(m.h || '')}</span></div>
@@ -409,11 +409,12 @@
     const cur = peek(st.day).m[m.i], alt = (o, n, extra = '') => `<button class="chip ${cur === o ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${o}" ${extra}>${n}</button>`;
     U.open(`<h3>${esc(m.n)}</h3><p class="mut sm">¿Qué comiste?</p>
       <div class="pick">${m.o.map((o, i) => {
+        if (o.y && m.o.some(z => !z.y)) return '';
         const t = nm(o), d = [], k = o.y ? m.t[0] : E.sum(items(o)).k;
-        return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}"><span class="pk-l">${o.y ? '🧭' : ((NG.food((items(o)[0] || {}).f) || {}).e || '🍽️')}</span>
+        return `<button class="pk ${cur === i ? 'on' : ''}" data-a="mset" data-m="${m.i}" data-o="${i}">
           <span class="pk-t"><b>${esc(t)}</b>${d.length ? `<small>${esc(d.join(': '))}</small>` : ''}</span><span class="pk-k">${n0(k)}<small>kcal</small></span></button>`;
       }).join('')}</div>
-      <div class="pk-alt">${m.o.some(o => o.y) ? '' : alt(-1, 'Comí afuera')}
+      <div class="pk-alt">${m.o.some(o => o.y && !m.o.some(z => !z.y)) ? '' : alt(-1, 'Comí afuera')}
         ${freePerWeek() ? alt(-3, freeLeft(st.day) || cur === -3 ? 'Comida libre' : 'Libre ya usada', freeLeft(st.day) || cur === -3 ? '' : 'disabled') : ''}
         ${alt(-2, 'No seguí el plan')}</div>
       <button class="btn ghost block" data-a="cbopen" data-m="${m.i}">${ic('plus', 15)} ${cur === -4 ? 'Editar lo que comí' : 'Comí otra cosa'}</button>`);
