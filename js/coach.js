@@ -319,7 +319,7 @@
     const local = location.protocol === 'file:' && !D.settings.appUrl;
     const h = new Date().getHours(), hi = h < 12 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
     return `<header class="chead dhead"><div><span class="brand">${esc(D.settings.brand)} · ${fdate(S.today(), true)}</span><h1>${hi}, ${esc(first(D.settings.name))}</h1></div>
-        <div class="row gap-s wrapr"><button class="btn ghost sm" data-a="formlink">${ic('link', 15)} Link del formulario</button><button class="btn ghost sm" data-a="newc">${ic('plus', 15)} Nuevo alumno</button><button class="btn pri sm" data-a="paste">${ic('dl', 15)} Pegar mensaje</button>
+        <div class="row gap-s wrapr"><button class="btn ghost sm" data-a="rev">✅ Revisión${(n => n ? ' · ' + n : '')(Object.values(D.clients).filter(c => !c.demo && c.plan.sentVersion && unreviewed(c)).length)}</button><button class="btn ghost sm" data-a="formlink">${ic('link', 15)} Link del formulario</button><button class="btn ghost sm" data-a="newc">${ic('plus', 15)} Nuevo alumno</button><button class="btn pri sm" data-a="paste">${ic('dl', 15)} Pegar mensaje</button>
           <span class="mob">${driveBtn(D.settings.driveUrl, '📁')}<button class="ib" data-a="go" data-h="#coach/ajustes" aria-label="Ajustes">${ic('gear', 20)}</button><button class="ib" data-a="lock" aria-label="Bloquear">${ic('lock', 20)}</button></span></div></header>
       ${backupBanner()}
       ${local ? `<div class="banner info"><span>🌐 Estás usando la app desde un archivo de tu PC. Para que los links funcionen en el celular de tus alumnos, publicala gratis (ver LEEME) y cargá la dirección en <b>Ajustes</b>.</span></div>` : ''}
@@ -331,6 +331,34 @@
           ${!cs.q && !Object.values(D.clients).some(c => c.demo) ? `<div class="center"><button class="btn ghost sm" data-a="demo">🧪 Cargar un alumno de ejemplo para explorar la app</button></div>` : ''}</section>
         <div class="dside">${weekBoard()}</div>
       </div>`;
+  }
+
+  /* ── Revisión semanal: lo que hay que mirar de cada alumno, en orden ── */
+  const unreviewed = c => { const l = lastCheckin(c); return !!l && c.rev !== l.date; };
+  function revBody() {
+    const active = Object.values(D.clients).filter(c => !c.demo && c.plan.sentVersion);
+    const todo = active.filter(unreviewed), miss = active.filter(c => !recentCheckin(c) && !unreviewed(c)), done = active.filter(c => recentCheckin(c) && !unreviewed(c));
+    const card = c => {
+      const l = lastCheckin(c), flags = [];
+      if (l) {
+        if (l.mo === 1) flags.push(['bad', '🤕 Molestia' + (l.md ? ': ' + l.md : '')]);
+        if (l.tr != null && l.tp && l.tr / l.tp < 0.75) flags.push(['warn', `🏋️ Entrenó ${l.tr} de ${l.tp}`]);
+        if (l.fa >= 4 || l.es >= 4) flags.push(['warn', `😮‍💨 Fatiga ${l.fa || '–'} · estrés ${l.es || '–'}`]);
+        if (l.adh != null && l.adh < 70) flags.push(['warn', `🍽️ Adherencia ${l.adh}%`]);
+        if (l.ej) flags.push(['info', '💪 ' + l.ej]);
+        if (l.no) flags.push(['info', '💬 ' + l.no]);
+        if (l.ft) flags.push(['info', '📸 Tocan fotos']);
+      }
+      const d = l && l.avg && l.prev ? l.avg - l.prev : null;
+      return `<div class="rvc"><div class="row between"><button class="who" data-a="revopen" data-id="${c.id}"><span class="av sm t-${tone(c.profile.name)}">${esc(ini(c.profile.name))}</span><b>${esc(c.profile.name || 'Sin nombre')}</b></button><span class="sm mut">${l ? ago(l.date) : 'sin check-ins'}</span></div>
+        ${l ? `<div class="rvs"><span><small>Peso</small><b>${l.avg ? n1(l.avg) + ' kg' : '—'}</b>${d != null ? `<small class="${d < 0 ? 'dn' : 'up'}">${d > 0 ? '▲' : '▼'} ${n1(Math.abs(d))}</small>` : ''}</span><span><small>Comidas</small><b>${l.adh == null ? '—' : l.adh + '%'}</b></span><span><small>Entrenos</small><b>${l.tr == null ? '—' : l.tr + (l.tp ? '/' + l.tp : '')}</b></span></div>` : ''}
+        ${flags.length ? `<div class="rvf">${flags.map(([lv, x]) => `<span class="wn ${lv}">${esc(x)}</span>`).join('')}</div>` : ''}
+        <div class="row gap-s wrapr">${unreviewed(c) ? `<button class="btn pri sm" data-a="revok" data-id="${c.id}">✓ Revisado</button>` : ''}${l ? '' : ''}<button class="btn ghost sm" data-a="revwa" data-id="${c.id}">WhatsApp</button>${!recentCheckin(c) ? `<button class="btn wa sm" data-a="remind" data-id="${c.id}">Recordar check-in</button>` : ''}</div></div>`;
+    };
+    const sec = (t, a) => a.length ? `<h4 class="rvh">${t} <span class="mut">${a.length}</span></h4>${a.map(card).join('')}` : '';
+    return `<h3>Revisión semanal</h3>${active.length ? '' : '<p class="sm mut">Cuando tengas alumnos con plan enviado, acá ves a quién mirar primero.</p>'}
+      ${sec('Para revisar', todo)}${sec('Sin check-in esta semana', miss)}${sec('Ya revisados', done)}
+      ${active.length && !todo.length && !miss.length ? '<p class="sm mut">Todo al día.</p>' : ''}`;
   }
 
   /* ── Ficha del alumno ──────────────────────────────────────────── */
@@ -859,6 +887,10 @@
         return;
       }
       case 'preview': location.hash = '#coach/pv/' + cl.id; return;
+      case 'rev': return U.open(revBody(), { wide: true });
+      case 'revok': { const c = D.clients[ds.id], l = c && lastCheckin(c); if (l) { c.rev = l.date; save(); U.update(revBody()); } return; }
+      case 'revwa': { const c = D.clients[ds.id]; return U.wa(c.profile.phone, ''); }
+      case 'revopen': U.close(); cs.tab = 'progreso'; location.hash = '#coach/c/' + ds.id + '/progreso'; return;
       case 'remind': {
         const c = D.clients[ds.id];
         return U.wa(c.profile.phone, `¡Buenas ${first(c.profile.name)}! Hoy es día de check-in 📋\nAbrí tu app → Progreso → «Enviar check-in semanal» (son 2 minutitos) y me llega directo. Mañana te dejo todo ajustado 💪`);
