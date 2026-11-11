@@ -229,7 +229,7 @@
     if (!n || days < 7) return '';
     return `<div class="banner warn"><span>💾 ${D.lastBackup ? `Tu último respaldo fue hace ${Math.floor(days)} días.` : 'Todavía no hiciste ningún respaldo.'} Descargalo y guardalo en Drive → 01_COACHING → 04_RESPALDOS APP.</span><button class="btn sm pri" data-a="backup">Respaldar ahora</button></div>`;
   }
-  const driveBtn = (url, label = '📁 Drive') => (/^https:\/\//i.test(url || '') ? `<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : '');
+  const driveBtn = (url, label = 'Drive') => (/^https:\/\//i.test(url || '') ? `<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>` : '');
   const lastCheckin = c => (c.checkins || []).reduce((m, x) => (!m || x.date > m.date ? x : m), null);
   // Tablero "Esta semana": todo lo pendiente en un solo lugar, para no tener que acordarse de nada
   // Lo pendiente de la semana (lo usan el tablero y el dashboard)
@@ -320,7 +320,7 @@
     const h = new Date().getHours(), hi = h < 12 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
     return `<header class="chead dhead"><div><span class="brand">${esc(D.settings.brand)} · ${fdate(S.today(), true)}</span><h1>${hi}, ${esc(first(D.settings.name))}</h1></div>
         <div class="row gap-s wrapr"><button class="btn ghost sm" data-a="rev">✅ Revisión${(n => n ? ' · ' + n : '')(Object.values(D.clients).filter(c => !c.demo && c.plan.sentVersion && unreviewed(c)).length)}</button><button class="btn ghost sm" data-a="formlink">${ic('link', 15)} Link del formulario</button><button class="btn ghost sm" data-a="newc">${ic('plus', 15)} Nuevo alumno</button><button class="btn pri sm" data-a="paste">${ic('dl', 15)} Pegar mensaje</button>
-          <span class="mob">${driveBtn(D.settings.driveUrl, '📁')}<button class="ib" data-a="go" data-h="#coach/ajustes" aria-label="Ajustes">${ic('gear', 20)}</button><button class="ib" data-a="lock" aria-label="Bloquear">${ic('lock', 20)}</button></span></div></header>
+          <span class="mob">${driveBtn(D.settings.driveUrl, 'Drive')}<button class="ib" data-a="go" data-h="#coach/ajustes" aria-label="Ajustes">${ic('gear', 20)}</button><button class="ib" data-a="lock" aria-label="Bloquear">${ic('lock', 20)}</button></span></div></header>
       ${backupBanner()}
       ${local ? `<div class="banner info"><span>🌐 Estás usando la app desde un archivo de tu PC. Para que los links funcionen en el celular de tus alumnos, publicala gratis (ver LEEME) y cargá la dirección en <b>Ajustes</b>.</span></div>` : ''}
       ${kpis()}
@@ -545,7 +545,7 @@
         <span class="row gap-s"><button class="ib sm" data-a="mup" data-mi="${mi}" ${mi ? '' : 'disabled'} aria-label="Subir">${ic('arrU', 15)}</button><button class="ib sm" data-a="mdown" data-mi="${mi}" ${mi < P.meals.length - 1 ? '' : 'disabled'} aria-label="Bajar">${ic('arrD', 15)}</button><button class="ib sm" data-a="mdel" data-mi="${mi}" aria-label="Eliminar comida">${ic('trash', 15)}</button></span>
       </div>
       <div class="row between wrapr"><div>${pills(m.target, { sm: true })}</div></div>
-      <div class="otabs">${m.options.map((x, i) => `<button class="${i === oi ? 'on' : ''}" data-a="osel" data-m="${m.id}" data-i="${i}">${x.type === 'flex' ? '🧭' : String.fromCharCode(65 + i)} <span>${esc(x.name.length > 26 ? x.name.slice(0, 24) + '…' : x.name)}</span></button>`).join('')}
+      <div class="otabs">${m.options.map((x, i) => `<button class="${i === oi ? 'on' : ''}" data-a="osel" data-m="${m.id}" data-i="${i}">${x.type === 'flex' ? 'F' : String.fromCharCode(65 + i)} <span>${esc(x.name.length > 26 ? x.name.slice(0, 24) + '…' : x.name)}</span></button>`).join('')}
         <button class="add" data-a="oadd" data-mi="${mi}">${ic('plus', 14)} Opción</button></div>
       ${o ? optEditor(cl, m, mi, o, oi) : '<div class="empty sm">Sin opciones. Agregá una.</div>'}
       <input class="mnote" data-b="${pb}.note" data-k="${pb}.note" value="${esc(m.note || '')}" placeholder="📝 Indicación para esta comida (opcional)">
@@ -566,7 +566,7 @@
         return `<div class="erow"><span class="e-e">${f.e}</span><div class="e-n"><b>${esc(f.n)}</b><small>${NG.GRUPOS[f.g].n}${f.ap ? ' · aprox.' : ''}</small></div>
           <div class="e-g"><input type="number" inputmode="decimal" data-b="${ob}.items.${ii}.g" data-k="${ob}.items.${ii}.g" data-t="num" value="${it.g}" step="${f.st || 5}" min="0"><small>${f.ml ? 'ml' : 'g'}${q.sub ? ' · ' + q.sub.replace('≈ ', '≈') : f.uf ? ' · ' + q.main : ''}</small></div>
           <div class="e-m">${n0(mm.k)} kcal<small>P ${n0(mm.p)} · C ${n0(mm.c)} · G ${n0(mm.f)}</small></div>
-          <div class="e-a"><button class="ib sm ${fixed ? 'on' : ''}" data-a="ifix" ${B} title="${fixed ? 'Cantidad fija (no se ajusta)' : 'Fijar cantidad'}">📌</button><button class="ib sm" data-a="iswap" ${B} title="Reemplazar por equivalente">${ic('swap', 14)}</button><button class="ib sm" data-a="idel" ${B} title="Quitar">${ic('x', 14)}</button></div></div>`;
+          <div class="e-a"><button class="ib sm ${fixed ? 'on' : ''}" data-a="ifix" ${B} title="${fixed ? 'Cantidad fija (no se ajusta)' : 'Fijar cantidad'}">${ic('lock', 14)}</button><button class="ib sm" data-a="iswap" ${B} title="Reemplazar por equivalente">${ic('swap', 14)}</button><button class="ib sm" data-a="idel" ${B} title="Quitar">${ic('x', 14)}</button></div></div>`;
       }).join('')}</div>
       <button class="btn ghost sm" data-a="pick" data-mode="item" ${A}>${ic('plus', 15)} Agregar alimento</button>
       <div class="otot dts sm">${['k', 'p', 'c', 'f'].map(k => `<div class="dt ${dcls(t[k], m.target[k])}"><small>${{ k: 'kcal', p: 'Prot', c: 'Carb', f: 'Gras' }[k]}</small><b>${n0(t[k])}</b><span>/ ${n0(m.target[k])}</span></div>`).join('')}</div>
@@ -603,7 +603,7 @@
     const P = cl.plan, W = E.warnings(cl, E.targets(cl)), bad = W.filter(w => w.lv === 'bad');
     const empty = P.meals.filter(m => !m.options.length).length;
     const local = location.protocol === 'file:' && !D.settings.appUrl;
-    const chk = (ok, t) => `<div class="chkl ${ok ? 'ok' : 'no'}">${ok ? '✅' : '⬜'} ${t}</div>`;
+    const chk = (ok, t) => `<div class="chkl ${ok ? 'ok' : 'no'}"><span class="chkb">${ok ? ic('check', 13) : ''}</span>${t}</div>`;
     return `<div class="cols">
       <section class="card"><h3>✔️ Antes de enviar</h3>
         ${chk(cl.profile.name && cl.profile.weight, 'Perfil completo')}
@@ -650,7 +650,7 @@
       </section>
       <section class="card"><div class="row between"><h3>📉 Peso promedio semanal</h3><button class="btn ghost sm" data-a="paste">📥 Pegar check-in</button></div>${chart}</section>
       <section class="card"><h3>📋 Check-ins (${ck.length})</h3>
-        ${ck.length ? `<div class="tblw"><table class="tbl"><thead><tr><th>Fecha</th><th>Peso</th><th>Comidas</th><th>Entrenos</th><th>Fatiga</th><th>Estrés</th><th>Molestias</th><th>Agua</th><th>⚡</th><th>😋</th><th>😴</th><th>🌿</th><th>Comentario</th><th></th></tr></thead><tbody>
+        ${ck.length ? `<div class="tblw"><table class="tbl"><thead><tr><th>Fecha</th><th>Peso</th><th>Comidas</th><th>Entrenos</th><th>Fatiga</th><th>Estrés</th><th>Molestias</th><th>Agua</th><th>Energía</th><th>Hambre</th><th>Descanso</th><th>Digestión</th><th>Comentario</th><th></th></tr></thead><tbody>
           ${ck.map(c => `<tr><td>${fdate(c.date)}</td><td>${c.avg ? n1(c.avg) + ' kg' : '—'}${c.avg && c.prev ? `<small class="${c.avg < c.prev ? 'down' : 'up'}"> ${c.avg - c.prev > 0 ? '+' : ''}${n1(c.avg - c.prev)}</small>` : ''}${c.cin ? `<small> · ${n1(c.cin)} cm</small>` : ''}</td>
             <td>${c.adh == null ? '—' : c.adh + '%'}${c.lib ? `<small> · 🍕${c.lib}</small>` : ''}</td>
             <td>${c.tr == null ? '—' : c.tr + (c.tp ? '/' + c.tp : '')}</td><td>${c.fa || '—'}</td><td>${c.es || '—'}</td>

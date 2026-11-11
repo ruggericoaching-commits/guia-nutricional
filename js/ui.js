@@ -58,16 +58,14 @@
     return long ? d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }) : `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`;
   };
 
-  // Envuelve los emojis en <span class="emj"> para mostrarlos en gris (solo texto: no toca atributos ni campos)
-  const EMO = /(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*️?)/u;
+  // Sin emojis: se quitan de todo el texto que se muestra y de los mensajes que se envían (no toca lo que escribe la persona)
+  const EMO = /\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*\uFE0F?/gu;
+  const strip = s => String(s).replace(EMO, '').replace(/[ \t]{2,}/g, ' ').replace(/^ +/gm, '');
   function mute(el) {
+    if (!el) return;
     const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = [];
-    while (w.nextNode()) { const n = w.currentNode; if (EMO.test(n.data) && !/^(TEXTAREA|OPTION|TITLE)$/.test(n.parentNode.nodeName) && !n.parentNode.classList.contains('emj')) nodes.push(n); }
-    nodes.forEach(n => {
-      const f = document.createDocumentFragment();
-      n.data.split(EMO).forEach((s, i) => { if (!s) return; if (i % 2) { const e = document.createElement('span'); e.className = 'emj'; e.textContent = s; f.append(e); } else f.append(s); });
-      n.replaceWith(f);
-    });
+    while (w.nextNode()) { const n = w.currentNode; EMO.lastIndex = 0; if (EMO.test(n.data) && !/^(TEXTAREA|TITLE)$/.test(n.parentNode.nodeName)) nodes.push(n); }
+    nodes.forEach(n => { n.data = n.data.replace(EMO, '').replace(/[ \t]{2,}/g, ' ').replace(n.previousSibling ? /^$/ : /^\s+/, ''); if (!n.data) n.remove(); });
   }
 
   /* ── Capas: hojas inferiores, diálogos y avisos ────────────────── */
@@ -112,11 +110,12 @@
   function toast(msg, ms = 2600) {
     let t = $('#toast');
     if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
-    t.innerHTML = esc(msg); t.classList.add('on');
+    t.innerHTML = esc(strip(msg).trim()); t.classList.add('on');
     clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms);
   }
 
   async function copy(text) {
+    text = strip(text);
     try { await navigator.clipboard.writeText(text); toast('✅ Copiado'); return true; } catch (e) {
       const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
       document.body.appendChild(ta); ta.select();
@@ -137,9 +136,10 @@
     return d;
   }
   function wa(num, text) {
-    window.open(`https://wa.me/${phone(num)}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    window.open(`https://wa.me/${phone(num)}?text=${encodeURIComponent(strip(text))}`, '_blank', 'noopener');
   }
   async function share(o) {
+    if (o.text) o = { ...o, text: strip(o.text) };
     if (navigator.share) { try { await navigator.share(o); return true; } catch (e) { if (e.name === 'AbortError') return false; } }
     return copy([o.text, o.url].filter(Boolean).join('\n'));
   }
@@ -170,7 +170,7 @@
     if (t === 'light' || t === 'dark') h.dataset.theme = t; else delete h.dataset.theme;
   }
 
-  NG.UI = { $, esc, n0, n1, ic, ring, bar, pills, qty, frac, fdate, open, update, close, closeAll, isOpen, confirm, toast, copy, wa, phone, share, paint, mute, enter, theme };
+  NG.UI = { strip, $, esc, n0, n1, ic, ring, bar, pills, qty, frac, fdate, open, update, close, closeAll, isOpen, confirm, toast, copy, wa, phone, share, paint, mute, enter, theme };
 
   document.addEventListener('click', e => { const b = e.target.closest('[data-ui=close]'); if (b) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && stack.length && !stack[stack.length - 1].o.noClose) close(); });

@@ -260,7 +260,7 @@
     const days = Array.from({ length: 7 }, (_, i) => S.addDays(today, i - 6));
     const mac = (k, n, v, t, col) => { const p = t ? Math.min(100, v / t * 100) : 0; return `<div><small>${n}</small><b>${n0(v)}<i> / ${n0(t)} g</i></b><div class="mbar"><i data-w="${p}" style="width:${tw('m' + k, p)}%;background:${col}"></i></div></div>`; };
     return `<header class="top"><div><span class="brand">${esc(co.b || co.n || 'Tu guía')}</span><h1>${hi}, ${esc(P.cl.n || '')}</h1></div>
-        <span class="row gap-s">${sk > 1 ? `<span class="streak" title="Días seguidos registrando">🔥 ${sk}</span>` : ''}${NG.installEvt && !st.preview ? `<button class="chip on" data-a="install">Instalar</button>` : ''}<button class="ib" data-a="settings" aria-label="Ajustes">${ic('gear', 20)}</button></span></header>
+        <span class="row gap-s">${sk > 1 ? `<span class="streak" title="Días seguidos registrando"><i></i>${sk} días</span>` : ''}${NG.installEvt && !st.preview ? `<button class="chip on" data-a="install">Instalar</button>` : ''}<button class="ib" data-a="settings" aria-label="Ajustes">${ic('gear', 20)}</button></span></header>
       <div class="week">${days.map(x => `<button class="${x === d ? 'on' : ''}" data-a="goday" data-d="${x}"><small>${'DLMMJVS'[new Date(x + 'T12:00:00').getDay()]}</small>
         <span class="wd"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.915" class="ring-bg"/><circle cx="18" cy="18" r="15.915" class="ring-fg" style="stroke:var(--acc)" stroke-dasharray="${ms.length ? doneCount(x) / ms.length * 100 : 0} 100" transform="rotate(-90 18 18)"/></svg><b>${+x.slice(8)}</b></span></button>`).join('')}</div>
       ${layout([
@@ -277,7 +277,7 @@
         <div class="tl">${ms.map(m => {
           const v = L.m[m.i], lbl = mealLabel(m, L), mm = mealMac(m, L);
           return `<div class="tli ${v == null ? '' : v === -2 ? 'off' : v === -3 ? 'done free' : 'done'}${st.just === m.i ? ' pop' : ''}">
-            <button class="tck" data-a="mcheck" data-m="${m.i}" aria-label="Marcar">${v == null ? '' : v === -2 ? '–' : v === -3 ? '🍕' : ic('check', 18)}</button>
+            <button class="tck" data-a="mcheck" data-m="${m.i}" aria-label="Marcar">${v == null ? '' : v === -2 ? '–' : ic('check', 18)}</button>
             <div class="tlb" data-a="msheet" data-m="${m.i}"><b>${esc(m.n)}</b>
             <div class="sm ${lbl ? '' : 'mut'}">${lbl ? esc(lbl) : `${m.h ? esc(m.h) + ' · ' : ''}Tocá para elegir`}</div></div>
             <span class="tk${v == null ? ' mut' : ''}">${n0(mm ? mm.k : m.t[0])}<small>kcal</small></span></div>`;
@@ -395,14 +395,14 @@
     return `${hero('Tu progreso', 'Lo que se mide, se mejora')}
       ${layout([
       [`<section class="card wsum">
-        <div class="row between"><h3>Últimos 7 días</h3>${sk > 1 ? `<span class="streak">🔥 ${sk}</span>` : ''}</div>
+        <div class="row between"><h3>Últimos 7 días</h3>${sk > 1 ? `<span class="streak"><i></i>${sk} días</span>` : ''}</div>
         <div class="wsg">${ring(wk.adh || 0, { size: 92, label: wk.adh == null ? '—' : wk.adh + '%', sub: 'comidas' })}
           <div class="wsl"><div><small>Días registrados</small><b>${sm.days}<i> / 7</i></b></div>
           <div><small>Calorías por día</small><b>${sm.days ? n0(sm.k) : '—'}<i> / ${n0(T.k)}</i></b></div>
           <div><small>Proteína por día</small><b>${sm.days ? n0(sm.p) : '—'}<i> / ${n0(T.p)} g</i></b></div></div></div>
       </section>`, 'a'],
       [`<section class="card"><div class="row between"><h3>Logros</h3><span class="mut sm">${bd.filter(b => b[2]).length}/${bd.length}</span></div>
-        <div class="bdgs">${bd.map(([e, n, on]) => `<div class="bdg${on ? ' on' : ''}"><span>${e}</span><small>${n}</small></div>`).join('')}</div></section>`, 'a'],
+        <div class="bdgs">${bd.map(([e, n, on]) => `<div class="bdg${on ? ' on' : ''}"><span>${on ? ic('check', 16) : ''}</span><small>${n}</small></div>`).join('')}</div></section>`, 'a'],
       [`<section class="card stats t-lime">
         <div><small>Promedio 7 días</small><b>${wk.avg ? n1(wk.avg) + ' kg' : '—'}</b></div>
         <div><small>vs semana anterior</small><b class="${diff == null ? '' : diff < 0 ? 'down' : 'up'}">${diff == null ? '—' : (diff > 0 ? '+' : '') + n1(diff) + ' kg'}</b></div>

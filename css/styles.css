@@ -814,3 +814,19 @@ button.pk-t { background: none; border: 0; padding: 0; color: inherit; font: inh
 .bdg span { font-size: 24px; line-height: 1; }
 .bdg .emj { filter: none; opacity: 1; }
 .bdg small { font-size: 11.5px; font-weight: 600; line-height: 1.25; }
+
+/* ── Sin emojis: los lugares que eran solo un ícono se ocultan o usan una marca propia ── */
+.logo-big:empty, .it-e:empty, .me:empty, .rec-e:empty, .tip-e:empty, .acc-h > span:empty, .mlist span:empty, .e-e, .emo, .grid-e > label:has(#ff-e) { display: none !important; }
+.erow { grid-template-columns: minmax(140px, 1fr) 128px 118px auto; grid-template-areas: "n g m a"; }
+@media (max-width: 640px) { .erow { grid-template-columns: 1fr auto; grid-template-areas: "n a" "g m"; } }
+.grid-e { grid-template-columns: 1fr; }
+.chkl { display: flex; align-items: center; gap: 10px; }
+.chkb { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; border: 1.5px solid var(--line2); color: var(--onacc); }
+.chkl.ok .chkb { background: var(--acc); border-color: var(--acc); }
+.chkl.no .chkb { border-color: var(--warn); }
+.streak i { width: 7px; height: 7px; border-radius: 50%; background: var(--C); box-shadow: 0 0 8px var(--C); margin-right: 3px; }
+.streak { font-size: 13px; font-weight: 600; }
+.bdg { opacity: .45; filter: none; }
+.bdg span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line2); color: var(--onacc); font-size: 0; }
+.bdg.on span { background: var(--acc); border-color: var(--acc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc) 18%, transparent); }
+.tli.free .tck { color: var(--tx); }
