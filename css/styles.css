@@ -830,3 +830,12 @@ button.pk-t { background: none; border: 0; padding: 0; color: inherit; font: inh
 .bdg span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line2); color: var(--onacc); font-size: 0; }
 .bdg.on span { background: var(--acc); border-color: var(--acc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--acc) 18%, transparent); }
 .tli.free .tck { color: var(--tx); }
+
+/* ── Encabezado común y bienvenida ── */
+.top { align-items: center; }
+.top .hsub { color: var(--mut); font-size: 13.5px; margin-top: 4px; }
+.cl .top { margin-bottom: 10px; }
+.intro3 { display: grid; gap: 10px; margin: 16px 0 20px; }
+.intro3 > div { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--r2); background: var(--card2); }
+.intro3 b { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; background: var(--acc); color: var(--onacc); font-size: 14px; }
+.intro3 p { margin: 0; font-size: 14.5px; }

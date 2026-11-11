@@ -134,6 +134,14 @@
     document.title = ((data.plan.co || {}).b || 'Guía Nutricional');
     window.scrollTo(0, 0);
     render();
+    if (!o.preview && !st.data.ui.intro && !Object.keys(st.data.logs).length) {
+      st.data.ui.intro = 1; save();
+      U.open(`<h3>Así se usa</h3>
+        <div class="intro3"><div><b>1</b><p>Tocá el círculo de una comida para anotarla.</p></div>
+        <div><b>2</b><p>Tocá el nombre para elegir otra opción o cambiar las cantidades.</p></div>
+        <div><b>3</b><p>Una vez por semana, mandá tu check-in desde Progreso.</p></div></div>
+        <button class="btn pri block" data-a="introk">Empezar</button>`);
+    }
     syncPlan();
   }
 
@@ -192,11 +200,10 @@
     animate();
   }
 
-  function hero(title, sub, right = '') {
+  function hero(title, sub) {
     const co = PL().co || {};
-    return `<header class="hero"><div class="hero-top"><span class="brand">${esc(co.b || co.n || 'Tu guía nutricional')}</span>
-      <span class="row gap-s">${NG.installEvt && !st.preview ? `<button class="chip on" data-a="install">📲 Instalar</button>` : ''}<button class="ib" data-a="settings" aria-label="Ajustes">${ic('gear', 20)}</button></span></div>
-      <div class="hero-main"><div><h1>${title}</h1>${sub ? `<div class="hsub">${sub}</div>` : ''}</div>${right}</div></header>`;
+    return `<header class="top"><div><span class="brand">${esc(co.b || co.n || 'Tu guía')}</span><h1>${title}</h1>${sub ? `<div class="hsub">${sub}</div>` : ''}</div>
+      <button class="ib" data-a="settings" aria-label="Ajustes">${ic('gear', 20)}</button></header>`;
   }
 
   /* HOY */
@@ -224,7 +231,8 @@
   function logged(mid, msg) {
     st.just = mid;
     if (navigator.vibrate) navigator.vibrate(12);
-    if (doneCount(st.day) === meals().length) { celebrate(); U.toast('🎉 ¡Día completo!'); } else if (msg) U.toast(msg);
+    const left = Math.round(PL().t.k - dayTotals(st.day).k);
+    if (doneCount(st.day) === meals().length) { celebrate(); U.toast('¡Día completo!'); } else U.toast(msg || (left > 0 ? `Anotado · te quedan ${n0(left)} kcal` : 'Anotado'));
     render(); st.just = null;
   }
   // Días seguidos registrando al menos una comida (hoy no corta la racha si todavía no anotó)
@@ -282,7 +290,8 @@
             <div class="sm ${lbl ? '' : 'mut'}">${lbl ? esc(lbl) : `${m.h ? esc(m.h) + ' · ' : ''}Tocá para elegir`}</div></div>
             <span class="tk${v == null ? ' mut' : ''}">${n0(mm ? mm.k : m.t[0])}<small>kcal</small></span></div>`;
         }).join('')}</div>
-        ${freePerWeek() ? `<button class="freeline" data-a="free">🍕 Comida libre <b>${fl ? leftTxt(fl) + ' esta semana' : 'ya la usaste esta semana'}</b></button>` : ''}
+        ${done === 0 && doneCount(S.addDays(d, -1)) ? `<button class="freeline" data-a="repeat">Repetir lo de ayer <b>un toque</b></button>` : ''}
+        ${freePerWeek() ? `<button class="freeline" data-a="free">Comida libre <b>${fl ? leftTxt(fl) + ' esta semana' : 'ya la usaste esta semana'}</b></button>` : ''}
       </section>`, 'a'],
       [`<div class="tiles">
         <div class="tile t-sky"><button class="tile-m" data-a="water" data-d="1"><small>Agua</small><b>${w}<i> / ${g} vasos</i></b><div class="mbar"><i data-w="${Math.min(100, w / g * 100)}" style="width:${tw('w', Math.min(100, w / g * 100))}%;background:var(--sky)"></i></div></button>${w ? `<button class="tile-x" data-a="water" data-d="-1" aria-label="Quitar un vaso">−</button>` : ''}</div>
@@ -392,7 +401,7 @@
     const diff = wk.avg && wk.prev ? wk.avg - wk.prev : null;
     const cells = Array.from({ length: 28 }, (_, i) => S.addDays(today, i - 27));
     const sm = weekSum(), T = PL().t, sk = streak(), bd = badges();
-    return `${hero('Tu progreso', 'Lo que se mide, se mejora')}
+    return `${hero('Tu progreso')}
       ${layout([
       [`<section class="card wsum">
         <div class="row between"><h3>Últimos 7 días</h3>${sk > 1 ? `<span class="streak"><i></i>${sk} días</span>` : ''}</div>
@@ -616,6 +625,16 @@
     switch (a) {
       case 'tab': st.tab = ds.t; st.anim = {}; window.scrollTo(0, 0); U.enter(); return render();
       case 'goday': if (ds.d <= S.today()) st.day = ds.d; return render();
+      case 'repeat': {
+        const Y = st.data.logs[S.addDays(st.day, -1)], L = log(st.day); if (!Y) return;
+        meals().forEach(m => {
+          const v = Y.m[m.i];
+          if (v === -4 && ((Y.c || {})[m.i] || []).length) { L.c = L.c || {}; L.c[m.i] = Y.c[m.i].map(i => ({ ...i })); L.m[m.i] = -4; }
+          else if (v === -1 || (v >= 0 && v < m.o.length)) L.m[m.i] = v;
+        });
+        save(); return logged(null, 'Copiado de ayer · tocá una comida para cambiarla');
+      }
+      case 'introk': return U.close();
       case 'msheet': return sheetCheck(ds.m);
       case 'wsheet': return sheetWeight();
       case 'out': return sheetOut();
