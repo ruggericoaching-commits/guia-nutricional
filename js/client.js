@@ -1,4 +1,4 @@
-/* App del alumno: Hoy · Plan · Afuera · Hábitos · Progreso */
+/* App del alumno: Hoy · Plan · Progreso */
 (function (NG) {
   const U = NG.UI, S = NG.S, E = NG.E;
   const { esc, n0, n1, ic, ring, bar, pills, qty, fdate } = U;
@@ -39,13 +39,14 @@
   const leftTxt = n => (n === 1 ? 'te queda 1' : `te quedan ${n}`);
   function save() { if (!st.preview) S.saveAlumno(st.data); }
 
+  function mealMac(m, L) {
+    const v = L.m[m.i]; if (v == null || v === -2) return null;
+    const o = m.o[v];
+    return v === -4 ? E.sum((L.c || {})[m.i] || []) : v >= 0 && o && !o.y ? E.sum(items(o)) : tgt(m);
+  }
   function dayTotals(d) {
     const L = peek(d), t = { k: 0, p: 0, c: 0, f: 0 };
-    meals().forEach(m => {
-      const v = L.m[m.i]; if (v == null || v === -2) return;
-      const o = m.o[v], add = v === -4 ? E.sum((L.c || {})[m.i] || []) : v >= 0 && o && !o.y ? E.sum(items(o)) : tgt(m);
-      t.k += add.k; t.p += add.p; t.c += add.c; t.f += add.f;
-    });
+    meals().forEach(m => { const add = mealMac(m, L); if (add) { t.k += add.k; t.p += add.p; t.c += add.c; t.f += add.f; } });
     return t;
   }
   const doneCount = d => meals().filter(m => { const v = peek(d).m[m.i]; return v != null && v !== -2; }).length;
@@ -124,7 +125,7 @@
     root = document.getElementById('app');
     const data = o.preview ? (o.demo ? demoData(o.plan) : { plan: o.plan, logs: {}, weights: [], checks: [], shop: {}, ui: {} }) : S.alumno();
     if (!data || !data.plan) return welcome();
-    st = { data, preview: !!o.preview, demo: !!o.demo, onExit: o.onExit, tab: st && !o.preview && st.tab ? st.tab : 'hoy', day: S.today(), open: {}, sel: {}, place: -1, hm: null };
+    st = { data, preview: !!o.preview, demo: !!o.demo, onExit: o.onExit, tab: st && !o.preview && st.tab ? st.tab : 'hoy', day: S.today(), open: {}, sel: {}, hm: null, anim: {} };
     st.data.logs = st.data.logs || {}; st.data.weights = st.data.weights || []; st.data.checks = st.data.checks || []; st.data.shop = st.data.shop || {}; st.data.ui = st.data.ui || {}; st.data.my = st.data.my || [];
     NG.extraFoods = foodsFromPlan(data.plan);
     if (!data.plan.r) data.plan.r = planRecs(data.plan);
@@ -181,13 +182,14 @@
   }
 
   /* ── Render ────────────────────────────────────────────────────── */
-  const TABS = [['hoy', '🏠', 'Hoy'], ['plan', '🍽️', 'Plan'], ['afuera', '🧭', 'Afuera'], ['habitos', '💡', 'Hábitos'], ['progreso', '📈', 'Progreso']];
+  const TABS = [['hoy', '🏠', 'Hoy'], ['plan', '🍽️', 'Plan'], ['progreso', '📈', 'Progreso']];
   function render() {
     if (!st) return;
-    const v = { hoy: vHoy, plan: vPlan, afuera: vAfuera, habitos: vHabitos, progreso: vProgreso }[st.tab] || vHoy;
+    const v = { hoy: vHoy, plan: vPlan, progreso: vProgreso }[st.tab] || vHoy;
     U.paint(root, `${st.preview ? `<div class="pvbar">👀 Vista previa del alumno${st.demo ? ' · datos simulados' : ''} <button class="btn sm" data-a="exitpv">${ic('chevL', 14)} Volver al panel</button></div>` : ''}
       <div class="wrap narrow cl">${v()}</div>
       <nav class="navb"><span class="nb-brand">${esc((PL().co || {}).b || (PL().co || {}).n || 'Tu guía')}</span>${TABS.map(([k, e, n]) => `<button class="${st.tab === k ? 'on' : ''}" data-a="tab" data-t="${k}"><span>${e}</span>${n}</button>`).join('')}</nav>`);
+    animate();
   }
 
   function hero(title, sub, right = '') {
@@ -198,49 +200,97 @@
   }
 
   /* HOY */
+  // Animaciones: cada valor arranca desde el que se veía antes
+  const tw = (k, v) => { const f = st.anim[k] ?? 0; st.anim[k] = v; return f; };
+  function animate() {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      root.querySelectorAll('[data-dash]').forEach(e => { e.style.strokeDasharray = e.dataset.dash + ' 100'; });
+      root.querySelectorAll('[data-w]').forEach(e => { e.style.width = e.dataset.w + '%'; });
+    }));
+    root.querySelectorAll('[data-count]').forEach(e => {
+      const a = +e.dataset.from, b = +e.dataset.count; if (a === b) return;
+      const t0 = performance.now(), step = t => { const p = Math.min(1, (t - t0) / 600); e.textContent = n0(a + (b - a) * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    });
+  }
+  function celebrate() {
+    if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const c = document.createElement('div'); c.className = 'confetti';
+    c.innerHTML = Array.from({ length: 36 }, (_, i) => `<i style="left:${Math.random() * 100}%;animation-delay:${Math.random() * 0.35}s;animation-duration:${1.2 + Math.random() * 0.9}s;background:var(--${['acc', 'sky', 'P', 'C', 'F'][i % 5]});transform:rotate(${Math.random() * 360}deg)"></i>`).join('');
+    document.body.append(c); setTimeout(() => c.remove(), 2600);
+  }
+  // Después de registrar una comida: marca con animación y festeja el día completo
+  function logged(mid, msg) {
+    st.just = mid;
+    if (navigator.vibrate) navigator.vibrate(12);
+    if (doneCount(st.day) === meals().length) { celebrate(); U.toast('🎉 ¡Día completo!'); } else if (msg) U.toast(msg);
+    render(); st.just = null;
+  }
+  // Días seguidos registrando al menos una comida (hoy no corta la racha si todavía no anotó)
+  function streak() {
+    let n = 0, d = S.today();
+    if (!doneCount(d)) d = S.addDays(d, -1);
+    while (doneCount(d) > 0 && n < 999) { n++; d = S.addDays(d, -1); }
+    return n;
+  }
+  // Lo último que eligió en esa comida: se repite con un toque
+  function lastChoice(m) {
+    for (let i = 1; i <= 14; i++) {
+      const L = st.data.logs[S.addDays(st.day, -i)]; if (!L) continue;
+      const v = L.m[m.i];
+      if (v === -4 && ((L.c || {})[m.i] || []).length) return { v, c: L.c[m.i] };
+      if (v >= 0 && v < m.o.length) return { v };
+    }
+    return null;
+  }
+  const mealLabel = (m, L) => {
+    const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
+    return v == null ? '' : v === -1 ? 'Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? 'Comida libre' : v === -4 ? ((L.c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? nm(o) : '');
+  };
+  const ckDue = () => { const c = st.data.checks, last = c.length ? c[c.length - 1].d : (PL().sd || PL().ph || Object.keys(st.data.logs).sort()[0]); return !!last && S.addDays(last, 7) <= S.today(); };
   function vHoy() {
-    const P = PL(), d = st.day, L = peek(d), ms = meals(), today = S.today();
-    const done = doneCount(d), pct = ms.length ? done / ms.length * 100 : 0;
-    const h = new Date().getHours(), hi = h < 12 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
-    const tt = dayTotals(d), T = P.t;
-    const tips = (P.r || []);
-    const tip = tips.length ? tips[(Math.floor(Date.now() / 864e5)) % tips.length] : null;
+    const P = PL(), d = st.day, L = peek(d), ms = meals(), today = S.today(), T = P.t, tt = dayTotals(d), co = P.co || {};
+    const done = doneCount(d), h = new Date().getHours(), hi = h < 12 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.navigator.standalone;
-    const g = glasses(), w = L.w || 0, ph = phase(), fl = freePerWeek() ? freeLeft(d) : 0;
-    return `${hero(`${hi}, ${esc(P.cl.n || '')} 👋`, fdate(d, true), ring(pct, { size: 76, label: `${done}/${ms.length}`, sub: 'comidas', color: 'var(--acc)' }))}
-      <div class="daynav"><button class="ib" data-a="day" data-d="-1">${ic('chevL')}</button>
-        <span>${d === today ? 'Hoy' : d === S.addDays(today, -1) ? 'Ayer' : fdate(d)}</span>
-        <button class="ib" data-a="day" data-d="1" ${d >= today ? 'disabled' : ''}>${ic('chevR')}</button></div>
+    const g = glasses(), w = L.w || 0, fl = freePerWeek() ? freeLeft(d) : 0, sk = streak();
+    const left = Math.round(T.k - tt.k), pct = T.k ? Math.min(100, tt.k / T.k * 100) : 0;
+    const lf = tw('left', Math.abs(left));
+    const kg = (st.data.weights || []).find(x => x.d === today);
+    const days = Array.from({ length: 7 }, (_, i) => S.addDays(today, i - 6));
+    const mac = (k, n, v, t, col) => { const p = t ? Math.min(100, v / t * 100) : 0; return `<div><small>${n}</small><b>${n0(v)}<i> / ${n0(t)} g</i></b><div class="mbar"><i data-w="${p}" style="width:${tw('m' + k, p)}%;background:${col}"></i></div></div>`; };
+    return `<header class="top"><div><span class="brand">${esc(co.b || co.n || 'Tu guía')}</span><h1>${hi}, ${esc(P.cl.n || '')}</h1></div>
+        <span class="row gap-s">${sk > 1 ? `<span class="streak" title="Días seguidos registrando">🔥 ${sk}</span>` : ''}${NG.installEvt && !st.preview ? `<button class="chip on" data-a="install">Instalar</button>` : ''}<button class="ib" data-a="settings" aria-label="Ajustes">${ic('gear', 20)}</button></span></header>
+      <div class="week">${days.map(x => `<button class="${x === d ? 'on' : ''}" data-a="goday" data-d="${x}"><small>${'DLMMJVS'[new Date(x + 'T12:00:00').getDay()]}</small>
+        <span class="wd"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.915" class="ring-bg"/><circle cx="18" cy="18" r="15.915" class="ring-fg" style="stroke:var(--acc)" stroke-dasharray="${ms.length ? doneCount(x) / ms.length * 100 : 0} 100" transform="rotate(-90 18 18)"/></svg><b>${+x.slice(8)}</b></span></button>`).join('')}</div>
       ${layout([
+        [d === today && ckDue() ? `<button class="card cta" data-a="checkin"><b>Toca tu check-in semanal</b><span>Enviar ${ic('chevR', 16)}</span></button>` : '', 'b'],
         [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan las fotos de progreso</b></section>` : '', 'b'],
         [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc row between"><span class="sm">📲 Compartir → <b>Agregar a inicio</b></span><button class="link sm" data-a="iosx">Ok</button></div>` : '', 'b'],
-      [`<section class="card t-lime">
-        <div class="kc"><b>${n0(tt.k)}</b><span>/ ${n0(T.k)} kcal</span></div>
-        ${bar(tt.k, T.k, 'var(--acc)')}
-        <div class="mgrid">
-          <div><span class="dot p"></span>Proteína<b>${n0(tt.p)} / ${n0(T.p)} g</b>${bar(tt.p, T.p, 'var(--P)')}</div>
-          <div><span class="dot c"></span>Carbos<b>${n0(tt.c)} / ${n0(T.c)} g</b>${bar(tt.c, T.c, 'var(--C)')}</div>
-          <div><span class="dot f"></span>Grasas<b>${n0(tt.f)} / ${n0(T.f)} g</b>${bar(tt.f, T.f, 'var(--F)')}</div>
-        </div>
+      [`<section class="card dayc">
+        <div class="bigring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.915" class="ring-bg"/><circle cx="18" cy="18" r="15.915" class="ring-fg" data-dash="${pct}" style="stroke:var(--acc);stroke-dasharray:${tw('ring', pct)} 100" transform="rotate(-90 18 18)"/></svg>
+          <div class="br-c"><b data-count="${Math.abs(left)}" data-from="${lf}">${n0(lf)}</b><small>${left >= 0 ? 'kcal restantes' : 'kcal sobre el objetivo'}</small><span>${n0(tt.k)} de ${n0(T.k)}</span></div></div>
+        <div class="macs">${mac('p', 'Proteína', tt.p, T.p, 'var(--P)')}${mac('c', 'Carbos', tt.c, T.c, 'var(--C)')}${mac('f', 'Grasas', tt.f, T.f, 'var(--F)')}</div>
       </section>`, 'a'],
-      [`<section class="card t-amber">
+      [`<section class="card">
         <div class="row between"><h3>Comidas</h3><span class="mut sm">${done}/${ms.length}</span></div>
         <div class="tl">${ms.map(m => {
-          const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
-          const lbl = v == null ? '' : v === -1 ? 'Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? 'Comida libre' : v === -4 ? ((peek(d).c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? nm(o) : '');
-          return `<div class="tli ${v == null ? '' : v === -2 ? 'off' : v === -3 ? 'done free' : 'done'}">
+          const v = L.m[m.i], lbl = mealLabel(m, L), mm = mealMac(m, L);
+          return `<div class="tli ${v == null ? '' : v === -2 ? 'off' : v === -3 ? 'done free' : 'done'}${st.just === m.i ? ' pop' : ''}">
             <button class="tck" data-a="mcheck" data-m="${m.i}" aria-label="Marcar">${v == null ? '' : v === -2 ? '–' : v === -3 ? '🍕' : ic('check', 18)}</button>
-            <div class="tlb" data-a="mopen" data-m="${m.i}"><div class="row between"><b>${(NG.MEAL_TYPES[m.y] || {}).e || '🍽️'} ${esc(m.n)}</b><span class="mut sm">${esc(m.h || '')}</span></div>
-            <div class="sm ${lbl ? '' : 'mut'}">${lbl ? esc(lbl) : `${m.o.length} ${m.o.length === 1 ? 'opción' : 'opciones'} · ${n0(m.t[0])} kcal`}${m.g && m.g !== 'normal' ? ` <span class="tag">${NG.TAGS[m.g]}</span>` : ''}</div></div>
-            ${ic('chevR', 16)}</div>`;
+            <div class="tlb" data-a="msheet" data-m="${m.i}"><b>${esc(m.n)}</b>
+            <div class="sm ${lbl ? '' : 'mut'}">${lbl ? esc(lbl) : `${m.h ? esc(m.h) + ' · ' : ''}Tocá para elegir`}</div></div>
+            <span class="tk${v == null ? ' mut' : ''}">${n0(mm ? mm.k : m.t[0])}<small>kcal</small></span></div>`;
         }).join('')}</div>
-        ${freePerWeek() ? `<button class="freeline" data-a="free">🍕 Comida libre planificada <b>${fl ? leftTxt(fl) + ' esta semana' : 'ya la usaste esta semana'}</b></button>` : ''}
+        ${freePerWeek() ? `<button class="freeline" data-a="free">🍕 Comida libre <b>${fl ? leftTxt(fl) + ' esta semana' : 'ya la usaste esta semana'}</b></button>` : ''}
       </section>`, 'a'],
-      [`<section class="card t-sky">
-        <div class="row between"><h3>💧 Agua</h3><span class="mut sm">${n1(w * 0.25)} / ${n1(g * 0.25)} L</span></div>
-        <div class="glasses">${Array.from({ length: g }, (_, i) => `<button class="gl ${i < w ? 'on' : ''}" data-a="wset" data-n="${i < w && i === w - 1 ? i : i + 1}" aria-label="Vaso ${i + 1}"></button>`).join('')}</div>
-        <div class="row center gap"><button class="btn ghost sm" data-a="water" data-d="-1">− vaso</button><button class="btn pri sm" data-a="water" data-d="1">+ vaso</button></div>
-      </section>`, 'b'],
+      [`<div class="tiles">
+        <div class="tile t-sky"><button class="tile-m" data-a="water" data-d="1"><small>Agua</small><b>${w}<i> / ${g} vasos</i></b><div class="mbar"><i data-w="${Math.min(100, w / g * 100)}" style="width:${tw('w', Math.min(100, w / g * 100))}%;background:var(--sky)"></i></div></button>${w ? `<button class="tile-x" data-a="water" data-d="-1" aria-label="Quitar un vaso">−</button>` : ''}</div>
+        ${d === today ? `<div class="tile"><button class="tile-m" data-a="wsheet"><small>Peso de hoy</small><b>${kg ? `${n1(kg.kg)}<i> kg</i>` : '<i>Registrar</i>'}</b></button></div>` : ''}
+      </div>`, 'b'],
+      [d === today ? `<section class="card"><h3>Hábitos</h3>
+        ${habitList().map(([k, e, n]) => `<button class="hab ${L.h && L.h[k] ? 'on' : ''}" data-a="habit" data-h="${k}"><span class="tck">${L.h && L.h[k] ? ic('check', 16) : ''}</span>${e} ${n}</button>`).join('')}
+      </section>` : '', 'b'],
       ])}
       <p class="disc">Guía orientativa: no reemplaza la consulta médica.</p>`;
   }
@@ -298,38 +348,11 @@
           </div>` : ''}
         </section>`;
       }).join(''), 'a'],
-      [`<button class="btn ghost block" data-a="shop">🛒 Ver lista de compras de la semana</button>`, 'b'],
+      [`<div class="stack"><button class="btn ghost block" data-a="shop">🛒 Lista de compras</button><button class="btn ghost block" data-a="out">🧭 Ideas para comer afuera</button></div>`, 'b'],
       ], true)}`;
   }
 
-  /* AFUERA */
-  function vAfuera() {
-    return `${hero('Comer afuera', 'Ideas para pedir en cada lugar')}
-      ${layout([
-      [NG.PLACES.map((p, i) => `<section class="card acc t-coral ${st.place === i ? 'open' : ''}">
-        <button class="acc-h" data-a="place" data-i="${i}"><span>${p.e}</span><b>${esc(p.t)}</b>${ic(st.place === i ? 'chevU' : 'chevD', 18)}</button>
-        ${st.place === i ? `<div class="acc-b"><ul class="clean">${p.best.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}</section>`).join(''), 'a'],
-      [`<section class="card t-sky"><h3>Cómo leer etiquetas</h3><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>`, 'b'],
-      ])}`;
-  }
-
-  /* HÁBITOS */
   const HABITS = [['veg', '🥦', 'Comí verduras en almuerzo y cena'], ['sueno', '😴', 'Dormí 7 horas o más'], ['mov', '🚶', 'Me moví / hice mis pasos']];
-  function phaseCard(ph, full) {
-    return `<section class="card phase t-violet"><div class="row between"><b>${ph.ph.e} Fase ${ph.idx + 1} de 3 · ${ph.ph.n}</b><span class="mut sm">${ph.idx < 2 ? `semana ${ph.inPhase} de 2` : `semana ${ph.week}`}</span></div>
-      <div class="phbar">${NG.PHASES.map((_, i) => `<i class="${i < ph.idx ? 'done' : i === ph.idx ? 'on' : ''}"></i>`).join('')}</div>
-      <p class="sm">${esc(ph.ph.focus)}</p><div class="sm mut">Meta: ${ph.ph.goal}% de las comidas</div></section>`;
-  }
-  function vHabitos() {
-    const P = PL(), L = peek(S.today()), ph = phase();
-    return `${hero('Hábitos', 'Marcá lo que cumpliste hoy')}
-      ${layout([
-      [`<section class="card t-mint"><h3>✅ Hoy</h3>
-        ${habitList().map(([k, e, n]) => `<button class="hab ${L.h && L.h[k] ? 'on' : ''}" data-a="habit" data-h="${k}"><span class="tck">${L.h && L.h[k] ? ic('check', 16) : ''}</span>${e} ${n}</button>`).join('')}
-        <button class="hab ${(L.w || 0) >= glasses() ? 'on' : ''}" data-a="tab" data-t="hoy"><span class="tck">${(L.w || 0) >= glasses() ? ic('check', 16) : ''}</span>💧 Tomé mi agua (${L.w || 0}/${glasses()} vasos)</button>
-      </section>`, 'b'],
-      ])}`;
-  }
 
   /* PROGRESO */
   function chart(ws) {
@@ -411,11 +434,12 @@
       <div class="items cb-items">${cb.items.map((it, i) => { const f = NG.food(it.f); return `<div class="it static"><span class="it-e">${f.e}</span><span class="it-n">${esc(f.n)}</span>
         <span class="cb-q"><button data-a="cbg" data-i="${i}" data-d="-${f.st || 10}" aria-label="Menos">−</button><b>${it.g} ${f.ml ? 'ml' : 'g'}</b><button data-a="cbg" data-i="${i}" data-d="${f.st || 10}" aria-label="Más">+</button></span>
         <button class="ib sm" data-a="cbdel" data-i="${i}" aria-label="Quitar">${ic('x', 14)}</button></div>`; }).join('') || '<p class="sm mut">Sumá los alimentos de abajo.</p>'}</div>
+      ${op ? `<button class="btn pri block big" data-a="cbsave" data-k="opt" ${cb.items.length ? '' : 'disabled'}>Registrar</button>` : `<input class="search block" placeholder="Nombre, si la querés guardar" data-live="cbn" value="${esc(cb.n || '')}">
+      <div class="row gap"><button class="btn ghost" data-a="cbsave" ${cb.items.length ? '' : 'disabled'}>Solo hoy</button><button class="btn pri" data-a="cbsave" data-k="my" ${cb.items.length ? '' : 'disabled'}>Guardar en mis comidas</button></div>`}
+      <h4>Sumar un alimento</h4>
       <input type="search" class="search block" placeholder="Buscar alimento…" data-live="cbq" value="${esc(cb.q)}">
       <div class="chips sm cb-grp">${[['', 'Todos']].concat(Object.entries(NG.GRUPOS).map(([k, g]) => [k, g.e + ' ' + g.n])).map(([k, n]) => `<button class="chip ${cb.g === k ? 'on' : ''}" data-a="cbgrp" data-v="${k}">${n}</button>`).join('')}</div>
-      <div class="items cb-list" id="cb-list">${cbList()}</div>
-      ${op ? `<button class="btn pri block" data-a="cbsave" data-k="opt" ${cb.items.length ? '' : 'disabled'}>Registrar</button>` : `<input class="search block" placeholder="Nombre, si la querés guardar" data-live="cbn" value="${esc(cb.n || '')}">
-      <div class="row gap"><button class="btn ghost" data-a="cbsave" ${cb.items.length ? '' : 'disabled'}>Solo hoy</button><button class="btn pri" data-a="cbsave" data-k="my" ${cb.items.length ? '' : 'disabled'}>Guardar en mis comidas</button></div>`}`;
+      <div class="items cb-list" id="cb-list">${cbList()}</div>`;
   }
   function sheetCb(mid) {
     const prev = (peek(st.day).c || {})[mid];
@@ -428,6 +452,19 @@
       <p>Tenés ${n === 1 ? '1 comida libre' : `${n} comidas libres`} por semana: <b>${left ? leftTxt(left) : 'ya la usaste'}</b> esta semana.</p>
       <ul class="clean">${NG.FREE_TIPS.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
       <p class="sm mut">Marcala con ✓ en la comida que elijas. Cuenta como cumplida.</p>`);
+  }
+  function sheetOut() {
+    U.open(`<h3>Comer afuera</h3><p class="mut sm">Ideas para pedir en cada lugar</p>
+      ${NG.PLACES.map(p => `<details class="acc-d"><summary>${p.e} ${esc(p.t)}</summary><ul class="clean">${p.best.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`).join('')}
+      <details class="acc-d"><summary>🏷️ Cómo leer etiquetas</summary><ul class="clean">${NG.LABELS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`);
+  }
+  function sheetWeight() {
+    const tw = (st.data.weights || []).find(w => w.d === S.today());
+    U.open(`<h3>Peso de hoy</h3>
+      <div class="row gap"><label class="fld grow"><span>Peso (kg)</span><input id="wkg" type="text" inputmode="decimal" autocomplete="off" value="${tw ? tw.kg : ''}" placeholder="Ej: 72,5"></label>
+      <label class="fld grow"><span>Cintura (cm, opcional)</span><input id="wcin" type="text" inputmode="decimal" autocomplete="off" value="${tw && tw.cin ? tw.cin : ''}" placeholder="Ej: 84"></label></div>
+      <button class="btn pri block" data-a="wsave">Guardar</button>
+      <p class="sm mut">En ayunas. Importa el promedio de la semana.</p>`);
   }
   function sheetSwap(fid, g) {
     const f = NG.food(fid); if (!f) return;
@@ -542,18 +579,23 @@
   async function click(a, el) {
     const ds = el.dataset;
     switch (a) {
-      case 'tab': st.tab = ds.t; window.scrollTo(0, 0); U.enter(); return render();
+      case 'tab': st.tab = ds.t; st.anim = {}; window.scrollTo(0, 0); U.enter(); return render();
+      case 'goday': if (ds.d <= S.today()) st.day = ds.d; return render();
+      case 'msheet': return sheetCheck(ds.m);
+      case 'wsheet': return sheetWeight();
+      case 'out': return sheetOut();
       case 'day': { const nd = S.addDays(st.day, +ds.d); if (nd <= S.today()) st.day = nd; return render(); }
       case 'mcheck': {
         const L = log(st.day);
-        if (L.m[ds.m] != null) { delete L.m[ds.m]; save(); return render(); }
-        return sheetCheck(ds.m);
+        if (L.m[ds.m] != null) { delete L.m[ds.m]; if (L.c) delete L.c[ds.m]; save(); return render(); }
+        const m = meals().find(x => x.i === ds.m), lc = m && lastChoice(m);
+        if (!lc) return sheetCheck(ds.m);
+        L.m[ds.m] = lc.v; if (lc.c) { L.c = L.c || {}; L.c[ds.m] = lc.c.map(i => ({ ...i })); } save();
+        return logged(ds.m, 'Anotado lo de siempre');
       }
       case 'mset': {
         const L = log(st.day); L.m[ds.m] = +ds.o; save(); U.close();
-        if (+ds.o === -3) U.toast('🍕 ¡Disfrutala! Volvé al plan en la comida siguiente');
-        else if (doneCount(st.day) === meals().length) U.toast('🎉 ¡Día completo! Excelente trabajo');
-        return render();
+        return logged(ds.m, +ds.o === -3 ? '🍕 ¡Disfrutala!' : '');
       }
       case 'free': return sheetFree();
       case 'cbopen': return sheetCb(ds.m);
@@ -566,10 +608,9 @@
         if (ds.k === 'my') st.data.my.push({ n: (st.cb.n || '').trim().slice(0, 40) || st.cb.items.slice(0, 2).map(i => NG.food(i.f).n).join(' + '), items: st.cb.items.map(i => ({ ...i })) });
         const L = log(st.day); L.c = L.c || {};
         if (ds.k === 'opt' && JSON.stringify(st.cb.items) === st.cb.base) { L.m[st.cb.m] = st.cb.o; delete L.c[st.cb.m]; } else { L.c[st.cb.m] = st.cb.items; L.m[st.cb.m] = -4; } save(); U.close();
-        if (doneCount(st.day) === meals().length) U.toast('🎉 ¡Día completo! Excelente trabajo'); else U.toast('Comida guardada');
-        return render();
+        return logged(st.cb.m, '');
       }
-      case 'myuse': { const x = st.data.my[+ds.i]; if (!x) return; const L = log(st.day); L.c = L.c || {}; L.c[ds.m] = x.items.map(i => ({ ...i })); L.m[ds.m] = -4; save(); U.close(); U.toast('Comida guardada'); return render(); }
+      case 'myuse': { const x = st.data.my[+ds.i]; if (!x) return; const L = log(st.day); L.c = L.c || {}; L.c[ds.m] = x.items.map(i => ({ ...i })); L.m[ds.m] = -4; save(); U.close(); return logged(ds.m, ''); }
       case 'mydel': st.data.my.splice(+ds.i, 1); save(); U.close(); return sheetCheck(ds.m);
       case 'ckset': {
         st.ck[ds.c] = +ds.v;
@@ -577,22 +618,19 @@
         if (ds.c === 'mo') { const w = document.getElementById('ck-md-wrap'); if (w) w.style.display = +ds.v ? '' : 'none'; }
         return;
       }
-      case 'mopen': st.tab = 'plan'; st.openId = ds.m; render(); setTimeout(() => { const e = document.getElementById('meal-' + ds.m); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30); return;
       case 'mtoggle': st.openId = openId() === ds.m ? null : ds.m; return render();
       case 'opt': st.sel[ds.m] = +ds.o; return render();
       case 'swap': return sheetSwap(ds.f, +ds.g);
       case 'water': { const L = log(st.day); L.w = Math.max(0, Math.min(30, (L.w || 0) + +ds.d)); save(); if (+ds.d > 0 && L.w === glasses()) U.toast('💧 ¡Meta de agua cumplida!'); return render(); }
       case 'wset': { const L = log(st.day); L.w = +ds.n; save(); return render(); }
       case 'habit': { const L = log(S.today()); L.h = L.h || {}; L.h[ds.h] = !L.h[ds.h]; save(); return render(); }
-      case 'rec': st.rec = st.rec === +ds.i ? -1 : +ds.i; return render();
-      case 'place': st.place = st.place === +ds.i ? -1 : +ds.i; return render();
       case 'wsave': {
         const kg = parseFloat(String(document.getElementById('wkg').value).replace(',', '.'));
         const cin = parseFloat(String(document.getElementById('wcin').value).replace(',', '.'));
         if (!(kg > 20 && kg < 350)) return U.toast('Ingresá un peso válido');
         const d = S.today(), ws = st.data.weights.filter(w => w.d !== d);
         ws.push({ d, kg: Math.round(kg * 10) / 10, ...(cin > 30 && cin < 250 ? { cin: Math.round(cin * 2) / 2 } : {}) });
-        st.data.weights = ws.sort((x, y) => (x.d < y.d ? -1 : 1)); save(); U.toast('✅ Peso guardado'); return render();
+        st.data.weights = ws.sort((x, y) => (x.d < y.d ? -1 : 1)); save(); U.closeAll(); U.toast('✅ Peso guardado'); return render();
       }
       case 'wdel': st.data.weights = st.data.weights.filter(w => w.d !== ds.d); save(); return render();
       case 'checkin': return sheetCheckin();
