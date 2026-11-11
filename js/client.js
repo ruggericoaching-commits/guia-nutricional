@@ -369,13 +369,46 @@
       <polyline points="${line}" class="cline"/>${pts.map(p => `<circle cx="${X(p.d).toFixed(1)}" cy="${Y(p.kg).toFixed(1)}" r="3" class="cdot"/>`).join('')}
       <text x="${pad}" y="${H - 4}" class="axl">${fdate(pts[0].d)}</text><text x="${W - pad}" y="${H - 4}" class="axl" text-anchor="end">${fdate(pts[pts.length - 1].d)}</text></svg>`;
   }
+  function weekSum() {
+    let days = 0, k = 0, p = 0;
+    for (let i = 0; i < 7; i++) { const d = S.addDays(S.today(), -i); if (doneCount(d)) { const x = dayTotals(d); days++; k += x.k; p += x.p; } }
+    return { days, k: days ? k / days : 0, p: days ? p / days : 0 };
+  }
+  function bestStreak() {
+    let best = 0, cur = 0, prev = null;
+    Object.keys(st.data.logs).filter(d => doneCount(d) > 0).sort().forEach(d => { cur = prev && S.addDays(prev, 1) === d ? cur + 1 : 1; best = Math.max(best, cur); prev = d; });
+    return best;
+  }
+  function badges() {
+    const logs = st.data.logs, n = meals().length, bs = bestStreak();
+    const full = Object.keys(logs).filter(d => n && doneCount(d) === n).length, water = Object.values(logs).filter(L => (L.w || 0) >= glasses()).length;
+    return [['🥇', 'Primera comida', bs >= 1], ['🔥', '3 días seguidos', bs >= 3], ['🔥', '7 días seguidos', bs >= 7], ['🔥', '30 días seguidos', bs >= 30],
+      ['✅', 'Día completo', full >= 1], ['🏆', '10 días completos', full >= 10], ['💧', 'Meta de agua 7 veces', water >= 7], ['⚖️', '10 pesajes', (st.data.weights || []).length >= 10],
+      ['📋', 'Primer check-in', st.data.checks.length >= 1], ['📋', '4 check-ins', st.data.checks.length >= 4]];
+  }
   function vProgreso() {
     const ws = (st.data.weights || []).slice().sort((a, b) => (a.d < b.d ? -1 : 1));
     const today = S.today(), tw = ws.find(w => w.d === today), wk = weekStats(today);
     const diff = wk.avg && wk.prev ? wk.avg - wk.prev : null;
     const cells = Array.from({ length: 28 }, (_, i) => S.addDays(today, i - 27));
+    const sm = weekSum(), T = PL().t, sk = streak(), bd = badges();
     return `${hero('Tu progreso', 'Lo que se mide, se mejora')}
       ${layout([
+      [`<section class="card wsum">
+        <div class="row between"><h3>Últimos 7 días</h3>${sk > 1 ? `<span class="streak">🔥 ${sk}</span>` : ''}</div>
+        <div class="wsg">${ring(wk.adh || 0, { size: 92, label: wk.adh == null ? '—' : wk.adh + '%', sub: 'comidas' })}
+          <div class="wsl"><div><small>Días registrados</small><b>${sm.days}<i> / 7</i></b></div>
+          <div><small>Calorías por día</small><b>${sm.days ? n0(sm.k) : '—'}<i> / ${n0(T.k)}</i></b></div>
+          <div><small>Proteína por día</small><b>${sm.days ? n0(sm.p) : '—'}<i> / ${n0(T.p)} g</i></b></div></div></div>
+      </section>`, 'a'],
+      [`<section class="card"><div class="row between"><h3>Logros</h3><span class="mut sm">${bd.filter(b => b[2]).length}/${bd.length}</span></div>
+        <div class="bdgs">${bd.map(([e, n, on]) => `<div class="bdg${on ? ' on' : ''}"><span>${e}</span><small>${n}</small></div>`).join('')}</div></section>`, 'a'],
+      [`<section class="card stats t-lime">
+        <div><small>Promedio 7 días</small><b>${wk.avg ? n1(wk.avg) + ' kg' : '—'}</b></div>
+        <div><small>vs semana anterior</small><b class="${diff == null ? '' : diff < 0 ? 'down' : 'up'}">${diff == null ? '—' : (diff > 0 ? '+' : '') + n1(diff) + ' kg'}</b></div>
+        <div><small>Adherencia 7 días</small><b>${wk.adh == null ? '—' : wk.adh + '%'}</b></div>
+      </section>`, 'a'],
+      [`<section class="card t-lime"><h3>📉 Evolución</h3>${chart(ws)}</section>`, 'a'],
       [`<section class="card t-sky">
         <h3>⚖️ Registrar peso de hoy</h3>
         <div class="row gap"><label class="fld grow"><span>Peso (kg)</span><input id="wkg" type="text" inputmode="decimal" autocomplete="off" value="${tw ? tw.kg : ''}" placeholder="Ej: 72,5"></label>
@@ -383,12 +416,6 @@
         <button class="btn pri block" data-a="wsave">Guardar</button>
         <p class="sm mut">En ayunas. Importa el promedio de la semana.</p>
       </section>`, 'b'],
-      [`<section class="card stats t-lime">
-        <div><small>Promedio 7 días</small><b>${wk.avg ? n1(wk.avg) + ' kg' : '—'}</b></div>
-        <div><small>vs semana anterior</small><b class="${diff == null ? '' : diff < 0 ? 'down' : 'up'}">${diff == null ? '—' : (diff > 0 ? '+' : '') + n1(diff) + ' kg'}</b></div>
-        <div><small>Adherencia 7 días</small><b>${wk.adh == null ? '—' : wk.adh + '%'}</b></div>
-      </section>`, 'a'],
-      [`<section class="card t-lime"><h3>📉 Evolución</h3>${chart(ws)}</section>`, 'a'],
       [`<section class="card t-amber"><h3>🗓️ Últimas 4 semanas</h3>
         <div class="heat">${cells.map(d => { const n = meals().length, dn = st.data.logs[d] && Object.keys(st.data.logs[d].m || {}).length ? doneCount(d) / n : -1; return `<i title="${fdate(d)}" class="${dn < 0 ? '' : dn >= 0.9 ? 'l4' : dn >= 0.6 ? 'l3' : dn >= 0.3 ? 'l2' : 'l1'}${d === today ? ' today' : ''}"></i>`; }).join('')}</div>
         <div class="row between sm mut"><span>Menos</span><span class="heat-k"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span><span>Más</span></div>
@@ -419,10 +446,18 @@
   // Armador de comida propia: cualquier alimento, con sus gramos; suma a los macros del día
   const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const defG = f => Math.max(+f.mn || 0, Math.min(+f.mx || 1000, f.ug || 100));
+  function foodUse() {
+    const u = {}, add = (id, n) => { u[id] = (u[id] || 0) + n; };
+    Object.values(st.data.logs).forEach(L => Object.values(L.c || {}).forEach(a => a.forEach(i => add(i.f, 3))));
+    (st.data.my || []).forEach(x => x.items.forEach(i => add(i.f, 2)));
+    meals().forEach(m => m.o.forEach(o => items(o).forEach(i => add(i.f, 1))));
+    return u;
+  }
   function cbList() {
     const q = norm(st.cb.q), added = new Set(st.cb.items.map(i => i.f));
+    const use = foodUse();
     const all = Object.values(NG.allFoods()).filter(f => !added.has(f.id) && (!st.cb.g || f.g === st.cb.g) && (!q || norm(f.n).includes(q)))
-      .sort((a, b) => a.n.localeCompare(b.n)).slice(0, 60);
+      .sort((a, b) => (use[b.id] || 0) - (use[a.id] || 0) || a.n.localeCompare(b.n)).slice(0, 60);
     return all.map(f => `<button class="it" data-a="cbadd" data-f="${f.id}"><span class="it-e">${f.e}</span><span class="it-n">${esc(f.n)}<small>${n0(f.k)} kcal cada 100 ${f.ml ? 'ml' : 'g'}</small></span>${ic('plus', 16)}</button>`).join('') || '<div class="empty sm">Sin resultados.</div>';
   }
   function cbBody() {
