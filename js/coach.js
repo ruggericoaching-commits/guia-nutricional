@@ -80,7 +80,7 @@
     const pr = Object.assign({}, cl.profile); delete pr.notes; delete pr.meals;
     return {
       v: 1, id: cl.id, sk: cl.cloudKey || '', ver: P.version || 1, ts: Date.now(),
-      co: { n: s.name, b: s.brand, w: U.phone(s.whatsapp) },
+      co: { n: s.name, b: s.brand, w: U.phone(s.whatsapp) }, pd: (n => (n >= 1 && n <= 31 ? n : 0))(parseInt(s.payDay === undefined ? 20 : s.payDay, 10)),
       cl: { n: first(cl.profile.name), g: cl.profile.goal, d: +cl.profile.diet, al: allergensOf(cl.profile), ex: cl.profile.exclude || [] },
       t: { k: T.kcal, p: T.p, c: T.c, f: T.f, fi: T.fi, w: T.water, wt: T.waterTrain },
       m: P.meals.map(m => ({
@@ -663,11 +663,12 @@
   /* ── Ajustes ───────────────────────────────────────────────────── */
   function vSettings() {
     const s = D.settings, cf = Object.values(D.customFoods || {});
-    const sf = (l, k, o = {}) => `<label class="fld"><span>${l}</span><input data-s="${k}" data-k="s-${k}" type="${o.type || 'text'}" value="${esc(s[k] || '')}" placeholder="${esc(o.ph || '')}">${o.hint ? `<small class="mut">${o.hint}</small>` : ''}</label>`;
+    const sf = (l, k, o = {}) => `<label class="fld"><span>${l}</span><input data-s="${k}" data-k="s-${k}" type="${o.type || 'text'}" value="${esc(s[k] === undefined && o.def ? o.def : s[k] || '')}" placeholder="${esc(o.ph || '')}">${o.hint ? `<small class="mut">${o.hint}</small>` : ''}</label>`;
     return `<header class="chead"><button class="ib" data-a="go" data-h="#coach">${ic('chevL', 22)}</button><div class="grow"><h1>Ajustes</h1></div></header>
       <div class="cols">
       <section class="card"><h3>🏷️ Tu marca</h3>${sf('Tu nombre', 'name')}${sf('Marca', 'brand')}
         ${sf('Tu WhatsApp', 'whatsapp', { ph: '5491122334455', hint: 'Formato internacional (54 9 + área + número). Ahí llegan formularios y check-ins.' })}</section>
+      <section class="card"><h3>Renovación del pago</h3>${sf('Día del mes', 'payDay', { type: 'number', def: '20', ph: '20', hint: 'Tus alumnos ven un recordatorio discreto ese día y los dos siguientes. Vacío = sin recordatorio. Para que les llegue, tocá «Publicar en su app» en cada alumno.' })}</section>
       <section class="card"><h3>🌐 Dirección pública de la app</h3>
         ${sf('URL donde publicaste la app', 'appUrl', { type: 'url', ph: 'https://tuusuario.github.io/guia/', hint: 'Los links de planes y formularios usan esta dirección. Si la dejás vacía se usa la dirección actual.' })}
         <p class="sm mut">Dirección actual: ${esc(location.href.replace(/#.*$/, ''))}</p></section>

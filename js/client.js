@@ -256,6 +256,10 @@
     const v = L.m[m.i], o = v >= 0 ? m.o[v] : null;
     return v == null ? '' : v === -1 ? 'Comí afuera' : v === -2 ? 'No seguí el plan' : v === -3 ? 'Comida libre' : v === -4 ? ((L.c || {})[m.i] || []).map(it => (NG.food(it.f) || {}).n).filter(Boolean).join(', ') : (o ? nm(o) : '');
   };
+  // Recordatorio de renovación: el día elegido por el entrenador y los dos siguientes, hasta que el alumno lo marque
+  const monthKey = () => S.today().slice(0, 7);
+  const payDay = () => { const n = +(PL().pd || 0), now = new Date(), last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(); return n ? Math.min(n, last) : 0; };
+  const payDue = () => { const p = payDay(), day = new Date().getDate(); return !!p && day >= p && day <= p + 2 && st.data.ui.payOk !== monthKey(); };
   const ckDue = () => { const c = st.data.checks, last = c.length ? c[c.length - 1].d : (PL().sd || PL().ph || Object.keys(st.data.logs).sort()[0]); return !!last && S.addDays(last, 7) <= S.today(); };
   function vHoy() {
     const P = PL(), d = st.day, L = peek(d), ms = meals(), today = S.today(), T = P.t, tt = dayTotals(d), co = P.co || {};
@@ -273,6 +277,7 @@
         <span class="wd"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.915" class="ring-bg"/><circle cx="18" cy="18" r="15.915" class="ring-fg" style="stroke:var(--acc)" stroke-dasharray="${ms.length ? doneCount(x) / ms.length * 100 : 0} 100" transform="rotate(-90 18 18)"/></svg><b>${+x.slice(8)}</b></span></button>`).join('')}</div>
       ${layout([
         [d === today && ckDue() ? `<button class="card cta" data-a="checkin"><b>Toca tu check-in semanal</b><span>Enviar ${ic('chevR', 16)}</span></button>` : '', 'b'],
+        [d === today && payDue() ? `<section class="card pay"><div><b>Renovación del plan</b><small>${payDay() === new Date().getDate() ? 'Hoy es el día de renovar.' : 'Quedó pendiente la renovación de este mes.'}</small></div><div class="row gap-s">${(PL().co || {}).w ? `<button class="btn ghost sm" data-a="payWa">Avisar</button>` : ''}<button class="btn ghost sm" data-a="payOk">Ya renové</button></div></section>` : '', 'b'],
         [d === today && photoDue() ? `<section class="card tipc t-coral"><b>📸 Esta semana tocan las fotos de progreso</b></section>` : '', 'b'],
         [isIOS && !st.data.ui.iosTip && !st.preview ? `<div class="card tipc row between"><span class="sm">📲 Compartir → <b>Agregar a inicio</b></span><button class="link sm" data-a="iosx">Ok</button></div>` : '', 'b'],
       [`<section class="card dayc">
@@ -635,6 +640,8 @@
         save(); return logged(null, 'Copiado de ayer · tocá una comida para cambiarla');
       }
       case 'introk': return U.close();
+      case 'payOk': st.data.ui.payOk = monthKey(); save(); return render();
+      case 'payWa': return U.wa((PL().co || {}).w, `Hola ${(PL().co || {}).n || ''}, ya renové el plan de este mes.`);
       case 'msheet': return sheetCheck(ds.m);
       case 'wsheet': return sheetWeight();
       case 'out': return sheetOut();
